@@ -6,6 +6,8 @@
 #include <wx/listctrl.h>
 #include <wx/treectrl.h>
 #include <wx/time.h> 
+#include <wx/clipbrd.h>
+#include <wx/tokenzr.h>
 
 #include <random>
 
@@ -39,6 +41,9 @@ EVT_MENU(wxID_EXIT, MainFrame::OnExit)
 EVT_MENU(ID_Settings, MainFrame::OnSettings)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_TIMER(wxID_ANY, MainFrame::OnTimerEvent)
+
+EVT_MENU(ID_Copy_URI, MainFrame::OnCopyURI)
+EVT_MENU(ID_Copy_URL, MainFrame::OnCopyURL)
 
 END_EVENT_TABLE()
 
@@ -115,6 +120,54 @@ activeSongIndex(0)
 		spotifyManager->playTrack(track);
 		activeSongIndex = index;
 
+	});
+
+	songList->Bind(wxEVT_LIST_ITEM_RIGHT_CLICK, [=](wxListEvent &event) {
+		//wxMenu menu("Play");
+
+		wxMenu popup("Track");
+
+		popup.Append(ID_Copy_TrackName, "Copy Track Name");
+		popup.Append(ID_Copy_URI, "Copy Spotify URI");
+		popup.Append(ID_Copy_URL, "Copy Spotify URL");
+
+		int selection = songList->GetPopupMenuSelectionFromUser(popup, event.GetPoint());
+
+		Track *track = (Track *)songList->GetItemData(event.GetItem());
+
+		switch (selection) {
+		case wxID_NONE:
+			break;
+		case 2:
+			if (wxTheClipboard->Open()) {
+				wxTheClipboard->SetData(new wxTextDataObject(track->getTitle() + " - " + track->getArtist()));
+				wxTheClipboard->Close();
+			}
+			break;
+		case 3:
+			if (wxTheClipboard->Open()) {
+				wxTheClipboard->SetData(new wxTextDataObject(track->getLink()));
+				wxTheClipboard->Close();
+			}
+			break;
+		case 4:
+
+			// typical link spotify:track:XXXXXXXXXX
+			wxStringTokenizer tokenizer(track->getLink(), ":");
+			
+			if (!tokenizer.HasMoreTokens()) break;
+
+			tokenizer.GetNextToken(); // skip spotify
+			wxString type = tokenizer.GetNextToken();
+			wxString id = tokenizer.GetNextToken();
+
+			if (wxTheClipboard->Open()) {
+				wxTheClipboard->SetData(new wxTextDataObject("https://open.spotify.com/" + type + "/" + id));
+				wxTheClipboard->Close();
+			}
+			break;
+
+		}
 	});
 
 
@@ -255,6 +308,18 @@ void MainFrame::OnSettings(wxCommandEvent &event)
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
 	wxMessageBox("wxSpot 0.5 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
+}
+
+void MainFrame::OnCopyURI(wxCommandEvent &event)
+{
+	//Track *track = (Track *)event.GetClientData();
+	//wxMessageBox("OnCopyURI" + track->getTitle());
+}
+
+void MainFrame::OnCopyURL(wxCommandEvent &event)
+{
+	//Track *track = (Track *)event.GetClientData();
+	//wxMessageBox("OnCopyURL" + track->getTitle());
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)

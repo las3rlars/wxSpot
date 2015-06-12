@@ -14,6 +14,26 @@ Track::~Track()
 	sp_track_release(m_pTrack);
 }
 
+wxString Track::getLink()
+{
+	char buffer[128];
+
+	if (sp_track_is_loaded(m_pTrack)) {
+
+		sp_error error = sp_track_error(m_pTrack);
+
+		if (error == SP_ERROR_OK) {
+			sp_link *link = sp_link_create_from_track(m_pTrack, 0);
+			sp_link_as_string(link, buffer, 128);
+			sp_link_release(link);
+
+			return wxString::FromUTF8(buffer);
+		}
+	}
+
+	return wxString("");
+}
+
 wxString Track::getTitle()
 {
 	if (sp_track_is_loaded(m_pTrack)) {

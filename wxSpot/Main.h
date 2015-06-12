@@ -32,7 +32,10 @@ public:
 private:
 
 	enum {
-		ID_Settings = 1
+		ID_Settings = 1,
+		ID_Copy_TrackName,
+		ID_Copy_URI,
+		ID_Copy_URL
 	};
 
 	void OnExit(wxCommandEvent &event);
@@ -48,6 +51,9 @@ private:
 	void OnSpotifyPlaylistStateChangedEvent(wxCommandEvent &event);
 	void OnSpotifySearchResultsEvent(wxCommandEvent &event);
 	void OnSpotifyLoggedInEvent(wxCommandEvent &event);
+
+	void OnCopyURI(wxCommandEvent &event);
+	void OnCopyURL(wxCommandEvent &event);
 
 	void OnTimerEvent(wxTimerEvent &event);
 
@@ -82,6 +88,8 @@ private:
 	wxStaticText *textTotalTime;
 
 	wxCheckBox *checkBoxShuffle;
+
+	//wxMenu *popup;
 
 	wxTimer timerStatusUpdate;
 
