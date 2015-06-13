@@ -11,6 +11,8 @@
 
 #include <random>
 
+#include "ProgressIndicator.h"
+
 #include "SoundManager.h"
 #include "SpotifyManager.h"
 #include "LoginDialogue.h"
@@ -219,11 +221,17 @@ activeSongIndex(0)
 	bottomHorzBox->Add(buttonPlayPause, 0, wxALL, 2);
 	bottomHorzBox->Add(buttonNext, 0, wxALL, 2);
 
-	progressSlider = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_AUTOTICKS);
+	/*progressSlider = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_AUTOTICKS);
 	progressSlider->Bind(wxEVT_SCROLL_CHANGED, [=](wxScrollEvent &event) {
 		spotifyManager->seek((progressSlider->GetValue() / 100.0) * spotifyManager->getSongLength());
-		//wxMessageBox(wxString::Format("trying to scroll to: %f %d %d", (progressSlider->GetValue() / 100.0) * spotifyManager->getSongLength(), progressSlider->GetValue(), spotifyManager->getSongLength()));
+	});*/
+
+	progressIndicator = new ProgressIndicator(panel);
+	progressIndicator->Bind(PI_SCROLL_CHANGED, [=](wxCommandEvent &event) {
+		//wxMessageBox(wxString::Format("Scroll changed: : %d", event.GetInt()));
+		spotifyManager->seek(progressIndicator->GetValue() * spotifyManager->getSongLength());
 	});
+
 
 	textCurrentProgressTime = new wxStaticText(panel, wxID_ANY, "0:00");
 	textTotalTime = new wxStaticText(panel, wxID_ANY, "0:00");
@@ -232,7 +240,8 @@ activeSongIndex(0)
 	checkBoxShuffle = new wxCheckBox(panel, wxID_ANY, _("Shuffle"));
 
 	bottomHorzBox->Add(textCurrentProgressTime, 0, wxALL, 2);
-	bottomHorzBox->Add(progressSlider, wxSizerFlags(1).Expand().Border(wxALL, 2));
+	//bottomHorzBox->Add(progressSlider, wxSizerFlags(1).Expand().Border(wxALL, 2));
+	bottomHorzBox->Add(progressIndicator, wxSizerFlags(1).Expand().Border(wxALL, 2));
 	bottomHorzBox->Add(textTotalTime, 0, wxALL, 2);
 	bottomHorzBox->Add(checkBoxShuffle, 0, wxALL, 2);
 	bottomHorzBox->Layout();
@@ -448,7 +457,8 @@ void MainFrame::OnTimerEvent(wxTimerEvent &event)
 
 	unsigned int duration = spotifyManager->getSongLength();
 
-	progressSlider->SetValue(((double)currTime / (double)duration) * 100);
+	progressIndicator->SetValue(((double)currTime / (double)duration));
+	//progressSlider->SetValue(((double)currTime / (double)duration) * 100);
 }
 
 void MainFrame::showLoginDialog()

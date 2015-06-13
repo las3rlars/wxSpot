@@ -224,12 +224,12 @@ static void SP_CALLCONV callback_metadata_updated(sp_session *sess)
 
 static int SP_CALLCONV callback_music_delivery(sp_session *sess, const sp_audioformat *format, const void *frames, int num_frames)
 {
-	if (num_frames == 0) {
+	/*if (num_frames == 0) {
 		return 0;
-	}
+	}*/
 
-	std::cout << format->sample_rate;
-	std::cout << format->sample_type;
+	//std::cout << format->sample_rate;
+	//std::cout << format->sample_type;
 
 	SpotifyManager *manager = GetManagerFromSession(sess);
 
@@ -385,6 +385,8 @@ void SpotifyManager::init(wxString cachePath)
 	if (error != SP_ERROR_OK) {
 		std::cerr << "failed setting high quality streaming" << sp_error_message(error) << std::endl;
 	}
+
+	sp_session_set_volume_normalization(m_pSession, false);
 
 }
 

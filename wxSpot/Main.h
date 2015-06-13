@@ -16,6 +16,7 @@ class wxListView;
 class wxTreeCtrl;
 class Playlist;
 class LoginDialogue;
+class ProgressIndicator;
 
 
 class MainFrame : public wxFrame
@@ -82,7 +83,8 @@ private:
 	wxButton *buttonPlayPause;
 	wxButton *buttonNext;
 	wxButton *buttonPrev;
-	wxSlider *progressSlider;
+	//wxSlider *progressSlider;
+	ProgressIndicator *progressIndicator;
 
 	wxStaticText *textCurrentProgressTime;
 	wxStaticText *textTotalTime;

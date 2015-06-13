@@ -30,6 +30,13 @@ std::mutex g_lock;
 
 void AudioBuffer::addData(const int16_t *data, const unsigned int samples)
 {
+
+	if (samples == 0) {
+		readOffset = 0;
+		writeOffset = 0;
+		stutter = 0;
+		return;
+	}
 #ifdef GROW	
 	if (writeOffset + samples > buffer.size()) {
 		buffer.resize(buffer.size() + BUFFER_SIZE, 0);
