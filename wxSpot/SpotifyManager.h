@@ -41,7 +41,7 @@ public:
 	
 	
 	void addSoundData(const void *data, int num_frames);
-	void addPlaylist(Playlist *playlist);
+	void addPlaylist(SpotifyPlaylist *playlist);
 	int getSampleDiff();
 	int getStutter();
 
@@ -51,8 +51,9 @@ public:
 
 	void search(const wxString searchstring);
 
-	std::vector<Playlist*> *getPlaylists() { return &playlists; }
-	std::vector<Track*> *getSearchResults() { return &searchResults; }
+	std::vector<SpotifyPlaylist*> *getPlaylists() { return &playlists; }
+	//std::vector<Track*> *getSearchResults() { return &searchResults; }
+	Playlist *getSearchResults() { return &searchResults; }
 
 	unsigned int getSongLength();
 	wxString getSongName();
@@ -69,8 +70,10 @@ private:
 	sp_track *m_spTrack;
 	wxEvtHandler *m_eventHandler;
 
-	std::vector<Playlist*> playlists;
-	std::vector<Track*> searchResults;
+	std::vector<SpotifyPlaylist*> playlists;
+	Playlist searchResults;
+	//std::vector<Playlist *> searchResults;
+	//std::vector<Track*> searchResults;
 
 };
 

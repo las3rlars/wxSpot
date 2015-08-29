@@ -1,5 +1,5 @@
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
+//#define _CRTDBG_MAP_ALLOC
+//#include <crtdbg.h>
 
 #include "Main.h"
 
@@ -8,8 +8,7 @@
 #include <wx/time.h> 
 #include <wx/clipbrd.h>
 #include <wx/tokenzr.h>
-
-#include <random>
+#include <wx/log.h>
 
 #include "ProgressIndicator.h"
 
@@ -44,18 +43,16 @@ EVT_MENU(ID_Settings, MainFrame::OnSettings)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_TIMER(wxID_ANY, MainFrame::OnTimerEvent)
 
-EVT_MENU(ID_Copy_URI, MainFrame::OnCopyURI)
-EVT_MENU(ID_Copy_URL, MainFrame::OnCopyURL)
-
 END_EVENT_TABLE()
 
 
 wxConfig *MainFrame::config = new wxConfig("wxSpot");
 
 MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size)
-: wxFrame((wxFrame *) nullptr, -1, title, pos, size),
-timerStatusUpdate(this, wxID_ANY),
-activeSongIndex(0)
+	: wxFrame((wxFrame *) nullptr, -1, title, pos, size),
+	timerStatusUpdate(this, wxID_ANY),
+	activeSongIndex(0),
+	activePlaylist(nullptr)
 
 {
 
@@ -92,7 +89,7 @@ activeSongIndex(0)
 
 	playlistTree->Bind(wxEVT_TREE_SEL_CHANGED, [=](wxTreeEvent &event) {
 		wxTreeItemId item = event.GetItem();
-		std::vector<Playlist*> *playlists = spotifyManager->getPlaylists();
+		std::vector<SpotifyPlaylist*> *playlists = spotifyManager->getPlaylists();
 		songList->Freeze();
 		songList->DeleteAllItems();
 		songList->SetClientData(nullptr);
@@ -105,6 +102,9 @@ activeSongIndex(0)
 					long item = songList->InsertItem(songList->GetItemCount(), tracks->at(j)->getTitle());
 					songList->SetItem(item, 1, tracks->at(j)->getArtist());
 					songList->SetItemPtrData(item, (wxUIntPtr)tracks->at(j));
+					if (spotifyManager->isTrackAvailable(tracks->at(j)) == false) {
+						songList->SetItemTextColour(item, *wxLIGHT_GREY);
+					}
 				}
 				break;
 			}
@@ -119,9 +119,17 @@ activeSongIndex(0)
 
 		wxListItem item = event.GetItem();
 		Track *track = (Track *)songList->GetItemData(item);
+		activePlaylist = (Playlist *)songList->GetClientData();
 		spotifyManager->playTrack(track);
 		activeSongIndex = index;
+	});
 
+	songList->Bind(wxEVT_LIST_COL_CLICK, [=](wxListEvent &event) {
+		int index = event.GetIndex();
+		int col = event.GetColumn();
+		if (col == 1) {
+			wxMessageBox("Column 1");
+		}
 	});
 
 	songList->Bind(wxEVT_LIST_ITEM_RIGHT_CLICK, [=](wxListEvent &event) {
@@ -221,15 +229,12 @@ activeSongIndex(0)
 	bottomHorzBox->Add(buttonPlayPause, 0, wxALL, 2);
 	bottomHorzBox->Add(buttonNext, 0, wxALL, 2);
 
-	/*progressSlider = new wxSlider(panel, wxID_ANY, 0, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL | wxSL_AUTOTICKS);
-	progressSlider->Bind(wxEVT_SCROLL_CHANGED, [=](wxScrollEvent &event) {
-		spotifyManager->seek((progressSlider->GetValue() / 100.0) * spotifyManager->getSongLength());
-	});*/
-
 	progressIndicator = new ProgressIndicator(panel);
 	progressIndicator->Bind(PI_SCROLL_CHANGED, [=](wxCommandEvent &event) {
-		//wxMessageBox(wxString::Format("Scroll changed: : %d", event.GetInt()));
 		spotifyManager->seek(progressIndicator->GetValue() * spotifyManager->getSongLength());
+
+		// force a process events for faster seeks :)
+		spotifyManager->processEvents();
 	});
 
 
@@ -240,7 +245,6 @@ activeSongIndex(0)
 	checkBoxShuffle = new wxCheckBox(panel, wxID_ANY, _("Shuffle"));
 
 	bottomHorzBox->Add(textCurrentProgressTime, 0, wxALL, 2);
-	//bottomHorzBox->Add(progressSlider, wxSizerFlags(1).Expand().Border(wxALL, 2));
 	bottomHorzBox->Add(progressIndicator, wxSizerFlags(1).Expand().Border(wxALL, 2));
 	bottomHorzBox->Add(textTotalTime, 0, wxALL, 2);
 	bottomHorzBox->Add(checkBoxShuffle, 0, wxALL, 2);
@@ -252,8 +256,6 @@ activeSongIndex(0)
 	vertBox->Layout();
 
 	panel->SetSizer(vertBox);
-
-	//SetSizer(vertBox);
 
 
 	soundManager = new SoundManager(this);
@@ -316,19 +318,7 @@ void MainFrame::OnSettings(wxCommandEvent &event)
 
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
-	wxMessageBox("wxSpot 0.5 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
-}
-
-void MainFrame::OnCopyURI(wxCommandEvent &event)
-{
-	//Track *track = (Track *)event.GetClientData();
-	//wxMessageBox("OnCopyURI" + track->getTitle());
-}
-
-void MainFrame::OnCopyURL(wxCommandEvent &event)
-{
-	//Track *track = (Track *)event.GetClientData();
-	//wxMessageBox("OnCopyURL" + track->getTitle());
+	wxMessageBox("wxSpot 0.7 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)
@@ -361,12 +351,13 @@ void MainFrame::OnSpotifyStoppedPlayingEvent(wxCommandEvent &event)
 
 void MainFrame::OnSpotifyEndOfTrackEvent(wxCommandEvent &event)
 {
-	next();
+	wxLogDebug("End of track event");
+	//next();
 }
 
 void MainFrame::OnSpotifyLoadedContainerEvent(wxCommandEvent &event)
 {
-	std::vector<Playlist*> *playlists = spotifyManager->getPlaylists();
+	std::vector<SpotifyPlaylist*> *playlists = spotifyManager->getPlaylists();
 
 	playlistTree->Freeze();
 	wxTreeItemId parent = playlistTree->GetRootItem();
@@ -399,7 +390,7 @@ void MainFrame::OnSpotifyPlaylistRenamedEvent(wxCommandEvent &event)
 {
 	int index = event.GetInt();
 
-	std::vector<Playlist*> *playlists = spotifyManager->getPlaylists();
+	std::vector<SpotifyPlaylist*> *playlists = spotifyManager->getPlaylists();
 
 	wxTreeItemId item = playlists->at(index)->getTreeItemId();
 
@@ -410,27 +401,30 @@ void MainFrame::OnSpotifyPlaylistStateChangedEvent(wxCommandEvent &event)
 {
 	int index = event.GetInt();
 
-	std::vector<Playlist*> *playlists = spotifyManager->getPlaylists();
+	std::vector<SpotifyPlaylist*> *playlists = spotifyManager->getPlaylists();
 
 	if (playlists->at(index)->isShared()) {
-		std::cout << " is shared ";
+		//std::cout << " is shared ";
 	}
 	/*for (int i = 0; i < playlists->size(); i++) {
 		if (playlists->at(i).isShared()) {
 			std::cout << " is shared ";
 		}
 	}*/
+	wxLogDebug("Playlist changed: %d", index);
 
 }
 
 void MainFrame::OnSpotifySearchResultsEvent(wxCommandEvent &event)
 {
 	
-	std::vector<Track*> *tracks = spotifyManager->getSearchResults();
+	//std::vector<Track*> *tracks = spotifyManager->getSearchResults();
+	Playlist *searchResults = spotifyManager->getSearchResults();
+	std::vector<Track *> *tracks = searchResults->getTracks();
 
 	songList->Freeze();
 	songList->DeleteAllItems();
-
+	songList->SetClientData(searchResults);
 	for (unsigned int j = 0; j < tracks->size(); j++) {
 		long item = songList->InsertItem(songList->GetItemCount(), tracks->at(j)->getTitle());
 		songList->SetItem(item, 1, tracks->at(j)->getArtist());
@@ -444,13 +438,11 @@ void MainFrame::OnSpotifyLoggedInEvent(wxCommandEvent &event)
 {
 	if (loginDialogue != nullptr) {
 		loginDialogue->GetEventHandler()->QueueEvent(event.Clone());
-		//loginDialogue->QueueEvent(NULL);
 	}
 }
 
 void MainFrame::OnTimerEvent(wxTimerEvent &event)
 {
-	//unsigned int timeDiff = wxGetUTCTimeMillis().GetValue() - playStartTime.GetValue();
 	unsigned int currTime = audioBuffer.getPlayTime();
 
 	textCurrentProgressTime->SetLabel(wxString::Format("%d:%02d", currTime / 60000, (currTime / 1000) % 60));
@@ -458,7 +450,6 @@ void MainFrame::OnTimerEvent(wxTimerEvent &event)
 	unsigned int duration = spotifyManager->getSongLength();
 
 	progressIndicator->SetValue(((double)currTime / (double)duration));
-	//progressSlider->SetValue(((double)currTime / (double)duration) * 100);
 }
 
 void MainFrame::showLoginDialog()
@@ -485,7 +476,6 @@ bool MainFrame::next()
 	Playlist *activePlaylist = (Playlist*)songList->GetClientData();
 	if (activePlaylist != nullptr) {
 		if (checkBoxShuffle->IsChecked()) {
-			std::default_random_engine generator;
 			std::uniform_int_distribution<unsigned int> distribution(0, activePlaylist->getTracks()->size() - 1);
 			int newIndex = distribution(generator);
 
@@ -505,6 +495,7 @@ bool MainFrame::next()
 			activeSongIndex++;
 		}
 		spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex));
+		spotifyManager->processEvents();
 
 	}
 	return true;
@@ -523,12 +514,18 @@ bool MainFrame::prev()
 		else {
 			activeSongIndex--;
 			spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex));
+			spotifyManager->processEvents();
 
 		}
 	}
 
 	return true;
 
+}
+
+void MainFrame::bufferDone()
+{
+	next();
 }
 
 Main::Main()

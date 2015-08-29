@@ -49,7 +49,7 @@ void ProgressIndicator::render(wxDC &dc)
 
 	dc.DrawRectangle(0, 0, width, height);
 	dc.SetBrush(*wxGREY_BRUSH);
-	dc.DrawRectangle(0, 2, width * value, height - 4);
+	dc.DrawRectangle(0, 1, width * value, height - 2);
 }
 
 void ProgressIndicator::mouseDown(wxMouseEvent &event)

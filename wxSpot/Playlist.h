@@ -12,23 +12,34 @@
 class Playlist
 {
 public:
-	Playlist(sp_playlist *playlist);
-	~Playlist();
-
-	wxString getTitle();
-	bool isShared();
+	Playlist();
+	virtual ~Playlist();
 
 	void setTreeItemId(wxTreeItemId item) { treeItem = item; }
 	wxTreeItemId getTreeItemId() { return treeItem; }
 
 	void addTrack(sp_track *track);
 	std::vector<Track*> *getTracks();
+	void clearTracks();
 
-	sp_playlist *getSpPlaylist();
 private:
-	sp_playlist *m_pPlaylist;
 	wxTreeItemId treeItem;
 	
 	std::vector<Track*> tracks;
 };
 
+class SpotifyPlaylist : public Playlist
+{
+public:
+	SpotifyPlaylist(sp_playlist *playlist);
+	~SpotifyPlaylist();
+
+	sp_playlist *getSpPlaylist();
+
+	wxString getTitle() const;
+	bool isShared();
+
+private:
+	sp_playlist *m_pPlaylist;
+
+};

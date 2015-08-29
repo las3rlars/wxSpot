@@ -4,7 +4,7 @@
 
 Track::Track(sp_track *track)
 {
-	m_pTrack = (sp_track*)track;
+	m_pTrack = track;
 	sp_track_add_ref(m_pTrack);
 }
 
@@ -34,18 +34,20 @@ wxString Track::getLink()
 	return wxString("");
 }
 
-wxString Track::getTitle()
+wxString Track::getTitle() const
 {
-	if (sp_track_is_loaded(m_pTrack)) {
+	sp_error error = sp_track_error(m_pTrack);
 
-		sp_error error = sp_track_error(m_pTrack);
-
-		if (error == SP_ERROR_OK) {
-			return wxString::FromUTF8(sp_track_name(m_pTrack));
-		}
+	if (error == SP_ERROR_OK) {
+		return wxString::FromUTF8(sp_track_name(m_pTrack));
+	}
+	else if (error == SP_ERROR_IS_LOADING) {
+		return wxString(_("Loading"));
 	}
 
-	return wxString(_("Loading"));
+	return wxString(_("Error"));
+
+	
 }
 
 wxString Track::getAlbum()
@@ -53,7 +55,7 @@ wxString Track::getAlbum()
 	return wxString("TODO");
 }
 
-wxString Track::getArtist()
+wxString Track::getArtist() const
 {
 	if (sp_track_is_loaded(m_pTrack)) {
 

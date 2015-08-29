@@ -3,6 +3,8 @@
 
 #include "Main.h"
 #include "AudioBuffer.h"
+//#include "Log.h"
+#include <wx/log.h>
 
 
 #include <cstdint>
@@ -42,9 +44,9 @@ static SpotifyManager *GetManagerFromSession(sp_session *sess)
 	return manager;
 }
 
-static Playlist *GetPlaylistFromSpPlaylist(SpotifyManager *manager, sp_playlist *pl)
+static SpotifyPlaylist *GetPlaylistFromSpPlaylist(SpotifyManager *manager, sp_playlist *pl)
 {
-	std::vector<Playlist*> *playlists = manager->getPlaylists();
+	std::vector<SpotifyPlaylist*> *playlists = manager->getPlaylists();
 	for (unsigned int i = 0; i < playlists->size(); i++) {
 		if (playlists->at(i)->getSpPlaylist() == pl) {
 			return playlists->at(i);
@@ -57,7 +59,7 @@ static void SP_CALLCONV callback_tracks_added(sp_playlist *pl, sp_track * const 
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 
-	Playlist *playlist = GetPlaylistFromSpPlaylist(manager, pl);
+	SpotifyPlaylist *playlist = GetPlaylistFromSpPlaylist(manager, pl);
 
 	if (playlist == nullptr) return;
 
@@ -82,7 +84,7 @@ static void SP_CALLCONV callbacks_playlist_renamed(sp_playlist *pl, void *userDa
 	//wxMessageBox(sp_playlist_name(pl));
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 
-	std::vector<Playlist*> *playlists = manager->getPlaylists();
+	std::vector<SpotifyPlaylist*> *playlists = manager->getPlaylists();
 
 	for (unsigned int i = 0; i < playlists->size(); i++) {
 		if (playlists->at(i)->getSpPlaylist() == pl) {
@@ -98,7 +100,7 @@ static void SP_CALLCONV callbacks_playlist_state_changed(sp_playlist *pl, void *
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 
-	std::vector<Playlist*> *playlists = manager->getPlaylists();
+	std::vector<SpotifyPlaylist*> *playlists = manager->getPlaylists();
 
 	for (unsigned int i = 0; i < playlists->size(); i++) {
 		if (playlists->at(i)->getSpPlaylist() == pl) {
@@ -147,7 +149,7 @@ static void SP_CALLCONV callback_container_loaded(sp_playlistcontainer *pc, void
 
 		sp_playlist_add_ref(spPlaylist);
 
-		Playlist *playlist = new Playlist(spPlaylist);
+		SpotifyPlaylist *playlist = new SpotifyPlaylist(spPlaylist);
 
 		if (sp_playlist_is_loaded(spPlaylist)) {
 			int num = sp_playlist_num_tracks(spPlaylist);
@@ -155,6 +157,12 @@ static void SP_CALLCONV callback_container_loaded(sp_playlistcontainer *pc, void
 				playlist->addTrack(sp_playlist_track(spPlaylist, i));
 			}
 		}
+		else {
+			wxLogDebug("Playlist not loaded");
+			//std::cout << "playlist not loaded";
+		}
+		//Log::err(L"Adding playlist: %s\n", playlist->getTitle());
+		wxLogDebug("Adding playlist: %s", playlist->getTitle());
 		manager->addPlaylist(playlist);
 	}
 
@@ -171,7 +179,7 @@ static sp_playlistcontainer_callbacks pc_callbacks = {
 static void SP_CALLCONV callback_logged_in(sp_session *sess, sp_error error)
 {
 	if (error != SP_ERROR_OK) {
-		std::cerr << "error logging in";
+		wxLogError("Error logging in");
 		return;
 	}
 
@@ -197,12 +205,13 @@ static void SP_CALLCONV callback_logged_in(sp_session *sess, sp_error error)
 
 static void SP_CALLCONV callback_logged_out(sp_session *sess)
 {
-
+	wxLogDebug("Logged out callback");
 }
 
 static void SP_CALLCONV callback_connection_error(sp_session *sess, sp_error error)
 {
-	std::cerr << "connection error" << sp_error_message(error) << std::endl;
+	wxLogError("Connection error: %s", sp_error_message(error));
+	//std::cerr << "connection error" << sp_error_message(error) << std::endl;
 }
 
 static void SP_CALLCONV callback_notify_main_thread(sp_session *sess)
@@ -213,28 +222,23 @@ static void SP_CALLCONV callback_notify_main_thread(sp_session *sess)
 
 static void SP_CALLCONV callback_log_message(sp_session *sess, const char *data)
 {
-
+	//std::cout << data;
+	wxLogDebug("Log message: %s", data);
 }
 
 static void SP_CALLCONV callback_metadata_updated(sp_session *sess)
 {
 	//tryToPlay(sess);
+	wxLogDebug("Meta updated");
 
+	//std::cout << "meta updated";
 }
 
 static int SP_CALLCONV callback_music_delivery(sp_session *sess, const sp_audioformat *format, const void *frames, int num_frames)
 {
-	/*if (num_frames == 0) {
-		return 0;
-	}*/
-
-	//std::cout << format->sample_rate;
-	//std::cout << format->sample_type;
-
 	SpotifyManager *manager = GetManagerFromSession(sess);
 
 	manager->addSoundData(frames, num_frames);
-
 
 	return num_frames;
 }
@@ -247,25 +251,29 @@ static void SP_CALLCONV callback_play_token_lost(sp_session *sess)
 		sp_session_player_unload(sess);
 		g_track = nullptr;
 	}
+
+	wxLogDebug("Play token lost callback");
 }
 
 static void SP_CALLCONV callback_playback_start(sp_session *sess)
 {
 	SpotifyManager *manager = GetManagerFromSession(sess);
 	manager->sendEvent(SPOTIFY_STARTED_PLAYING_EVENT);
+	wxLogDebug("Start playback callback");
 }
 
 static void SP_CALLCONV callback_playback_stop(sp_session *sess)
 {
 	SpotifyManager *manager = GetManagerFromSession(sess);
 	manager->sendEvent(SPOTIFY_STOPPED_PLAYING_EVENT);
-
+	wxLogDebug("Stop playback callback");
 }
 
 static void SP_CALLCONV callback_end_of_track(sp_session *sess)
 {
 	SpotifyManager *manager = GetManagerFromSession(sess);
 	manager->sendEvent(SPOTIFY_END_OF_TRACK_EVENT);
+	wxLogDebug("End of track callback");
 
 }
 
@@ -299,18 +307,20 @@ static void SP_CALLCONV callback_search_complete(sp_search *search, void *userDa
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 	if (sp_search_error(search) == SP_ERROR_OK) {
-		std::vector<Track*> *searchResults = manager->getSearchResults();
-		searchResults->clear();
+		//std::vector<Track*> *searchResults = manager->getSearchResults();
+		//searchResults->clear();
+		Playlist *searchResults = manager->getSearchResults();
 		for (int i = 0; i < sp_search_num_tracks(search); i++) {
 			
-			searchResults->push_back(new Track(sp_search_track(search, i)));
+			//searchResults->push_back(new Track(sp_search_track(search, i)));
+			searchResults->addTrack(sp_search_track(search, i));
 		}
 
 	}
 
 	manager->sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
 
-	sp_search_release(search);
+	//sp_search_release(search);
 }
 
 void tryToPlay(sp_session *sess)
@@ -322,20 +332,23 @@ void tryToPlay(sp_session *sess)
 
 	sp_error err = sp_track_error(g_track);
 	if (err != SP_ERROR_OK) {
-		std::cerr << "error with track";
+		wxLogDebug("Error with track");
+		//std::cerr << "error with track";
 		return;
 	}
 
 	err = sp_session_player_load(sess, g_track);
 	if (err != SP_ERROR_OK) {
-		std::cerr << "error loading track";
+		wxLogDebug("Error loading track");
+		//std::cerr << "error loading track";
 		return;
 	}
 
 
 	err = sp_session_player_play(sess, true);
 	if (err != SP_ERROR_OK) {
-		std::cerr << "error playing track";
+		wxLogError("Error playing track");
+		//std::cerr << "error playing track";
 		return;
 	}
 
@@ -377,7 +390,9 @@ void SpotifyManager::init(wxString cachePath)
 	sp_error error = sp_session_create(&config, &m_pSession);
 
 	if (error != SP_ERROR_OK) {
-		std::cerr << "failed to create session" << sp_error_message(error) << std::endl;
+		wxLogError("Failed to create session: %s", sp_error_message(error));
+		return;
+		//std::cerr << "failed to create session" << sp_error_message(error) << std::endl;
 	}
 
 	error = sp_session_preferred_bitrate(m_pSession, SP_BITRATE_320k);
@@ -396,8 +411,10 @@ void SpotifyManager::login(const wxString username, const wxString password)
 	sp_error error = sp_session_login(m_pSession, username.mb_str(), password.mb_str(), true, 0);
 
 	if (error != SP_ERROR_OK) {
-		std::cerr << "failed to login" << sp_error_message(error) << std::endl;
+		wxLogDebug("Failed to login: %s", sp_error_message(error));
 	}
+
+
 
 }
 
@@ -423,7 +440,7 @@ void SpotifyManager::setEventHandler(wxEvtHandler *eventHandler)
 
 void SpotifyManager::processEvents()
 {
-	int timeout = 1000;
+	int timeout = 500;
 	sp_session_process_events(m_pSession, &timeout);
 }
 
@@ -438,12 +455,16 @@ void SpotifyManager::addSoundData(const void *frames, int num_frames)
 {
 	AudioBuffer *buffer = m_pMainFrame->getAudioBuffer();
 	
-
-	buffer->addData((short *)frames, num_frames * 2);
+	if (buffer->getPlayTime() >= getSongLength()) {
+		m_pMainFrame->bufferDone();
+	}
+	else {
+		buffer->addData((short *)frames, num_frames * 2);
+	}
 }
 
 
-void SpotifyManager::addPlaylist(Playlist *playlist)
+void SpotifyManager::addPlaylist(SpotifyPlaylist *playlist)
 {
 	playlists.push_back(playlist);
 }

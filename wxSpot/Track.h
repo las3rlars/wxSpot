@@ -11,14 +11,14 @@ public:
 	~Track();
 
 	wxString getLink();
-	wxString getTitle();
+	wxString getTitle() const;
 	wxString getAlbum();
-	wxString getArtist();
+	wxString getArtist() const;
+	bool isAvailable() const;
 
 	sp_track *getSpTrack();
 
 private:
 	sp_track *m_pTrack;
-	wxString title;
 };
 

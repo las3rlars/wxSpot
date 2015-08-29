@@ -17,8 +17,12 @@ static int paCallback(const void *input, void *output, unsigned long frameCount,
 {
 	SoundManager *manager = GetManagerFromUserdata(userData);
 
-	manager->getSoundData(output, frameCount);
+	unsigned int samples = manager->getSoundData(output, frameCount * 2);
 
+	if (samples < frameCount * 2) {
+		manager->bufferDone();
+		return paComplete;
+	}
 	return paContinue;
 	
 }
@@ -29,7 +33,7 @@ SoundManager::SoundManager(MainFrame *mainFrame)
 	PaError error = Pa_Initialize();
 
 	if (error != paNoError) {
-		std::cerr << "PortAudio error: " << Pa_GetErrorText(error) << std::endl;
+		wxLogError("PortAudio Error: %s", Pa_GetErrorText(error));
 	}
 
 }
@@ -53,7 +57,7 @@ void SoundManager::init()
 	error = Pa_OpenDefaultStream(&m_pStream, 0, 2, paInt16, SAMPLE_RATE, 512, paCallback, this);
 
 	if (error != paNoError) {
-		std::cerr << "PortAdio error: " << Pa_GetErrorText(error) << std::endl;
+		wxLogError("PortAudio Error: %s", Pa_GetErrorText(error));
 	}
 }
 
@@ -72,10 +76,15 @@ void SoundManager::stop()
 	Pa_StopStream(m_pStream);
 }
 
-void SoundManager::getSoundData(void *frames, int num_frames)
+unsigned int SoundManager::getSoundData(void *frames, int num_frames)
 {
 	AudioBuffer *buffer = m_pMainFrame->getAudioBuffer();
 
-	buffer->readData((int16_t *)frames, num_frames * 2);
+	return buffer->readData((int16_t *)frames, num_frames);
 
+}
+
+void SoundManager::bufferDone()
+{
+	m_pMainFrame->bufferDone();
 }

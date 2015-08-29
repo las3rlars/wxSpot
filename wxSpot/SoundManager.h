@@ -13,7 +13,8 @@ public:
 	void end();
 	void play();
 	void stop();
-	void getSoundData(void *data, int num_frames);
+	unsigned int getSoundData(void *data, int num_frames);
+	void bufferDone();
 private:
 	MainFrame *m_pMainFrame;
 	PaStream *m_pStream;

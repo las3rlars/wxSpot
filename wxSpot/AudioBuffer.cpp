@@ -1,11 +1,12 @@
 #include "AudioBuffer.h"
 
-#include <mutex>
+//#include <mutex>
 #include <iterator>
+#include <wx/log.h>
 
 #define SAMPLE_RATE 44100
 #define CHANNELS 2
-#define BUFFER_TIME 10
+#define BUFFER_TIME 8
 #define BUFFER_SIZE SAMPLE_RATE * CHANNELS * BUFFER_TIME
 
 #define GROW 1
@@ -26,7 +27,7 @@ AudioBuffer::~AudioBuffer()
 {
 }
 
-std::mutex g_lock;
+//std::mutex g_lock;
 
 void AudioBuffer::addData(const int16_t *data, const unsigned int samples)
 {
@@ -92,7 +93,7 @@ int AudioBuffer::readData(int16_t *dest, const unsigned int samples)
 	std::copy(&buffer[readOffset], &buffer[readOffset] + samples, dest);
 	readOffset += samples;
 	playedFrame += samples;
-	return 0;
+	return samples;
 #elif TEST
 	if (writeOffset == 0) {
 		return 0;
@@ -149,16 +150,26 @@ int AudioBuffer::getStutter()
 
 unsigned int AudioBuffer::getPlayTime()
 {
-	return playedFrame / (44.1 * 2);
+	return playedFrame / ((44100 * 2) / 1000);
 }
 
 void AudioBuffer::setPlayTime(unsigned int time)
 {
-	playedFrame = (44.1 * 2) * time;
+	unsigned int newPlayedFrame = ((44100 * 2) / 1000) * time;
+	
+
+	if (newPlayedFrame < playedFrame) {
+		writtenFrame = 0;
+	}
+
+	playedFrame = newPlayedFrame;
+	
 }
 
 void AudioBuffer::reset()
 {
+	wxLogDebug("Resetting audio buffer with writtenFrame: %d playedFrame: %d readOffset: %d writeOffset: %d", writtenFrame, playedFrame, readOffset, writeOffset);
+
 	readOffset = 0;
 	writeOffset = 0;
 	stutter = 0;

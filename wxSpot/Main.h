@@ -6,6 +6,7 @@
 #endif
 
 #include <wx/config.h>
+#include <random>
 
 #include "AudioBuffer.h"
 
@@ -28,6 +29,7 @@ public:
 
 	SoundManager *getSoundManager() { return soundManager;  }
 	AudioBuffer *getAudioBuffer() { return &audioBuffer;  }
+	void bufferDone();
 
 	static wxConfig *config;
 private:
@@ -53,9 +55,6 @@ private:
 	void OnSpotifySearchResultsEvent(wxCommandEvent &event);
 	void OnSpotifyLoggedInEvent(wxCommandEvent &event);
 
-	void OnCopyURI(wxCommandEvent &event);
-	void OnCopyURL(wxCommandEvent &event);
-
 	void OnTimerEvent(wxTimerEvent &event);
 
 	void showLoginDialog();
@@ -63,6 +62,7 @@ private:
 	void playPause();
 	bool next();
 	bool prev();
+
 
 	wxPanel *panel;
 
@@ -102,8 +102,12 @@ private:
 	
 	LoginDialogue *loginDialogue;
 
-	//Playlist *activePlaylist;
+	Playlist *activePlaylist;
 	int activeSongIndex;
+
+	std::default_random_engine generator;
+
+
 
 	DECLARE_EVENT_TABLE()
 };
