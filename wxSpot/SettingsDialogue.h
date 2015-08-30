@@ -6,17 +6,22 @@
 #endif
 
 class wxStaticLine;
+class SoundManager;
 
 class SettingsDialogue : public wxDialog
 {
 public:
-	SettingsDialogue();
+	SettingsDialogue(SoundManager *soundManager);
 	~SettingsDialogue();
 
 private:
+	SoundManager *m_soundManager;
+
 	wxStaticText *mPathText;
 	wxTextCtrl *mPathTextCtrl;
 	wxButton *mSelectDirButton;
+	wxChoice *mDeviceChoice;
+
 	wxButton *mOkButton;
 	wxButton *mCancelButton;
 

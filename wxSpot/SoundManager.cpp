@@ -2,8 +2,6 @@
 
 #include "AudioBuffer.h"
 
-#include <iostream>
-
 #define SAMPLE_RATE (44100)
 
 
@@ -41,6 +39,12 @@ SoundManager::SoundManager(MainFrame *mainFrame)
 
 SoundManager::~SoundManager()
 {
+	for (size_t i = 0; i < devices.size(); i++) {
+		delete devices.at(i);
+	}
+
+	devices.clear();
+
 	PaError error = Pa_Terminate();
 
 	if (error != paNoError) {
@@ -53,7 +57,17 @@ void SoundManager::init()
 {
 	PaError error;
 
-
+	PaDeviceIndex deviceCount = Pa_GetDeviceCount();
+	PaDeviceIndex defaultDevice = Pa_GetDefaultOutputDevice();
+	wxLogDebug("Default output device: %d", defaultDevice);
+	for (PaDeviceIndex i = 0; i < deviceCount; i++) {
+		const PaDeviceInfo *info = Pa_GetDeviceInfo(i);
+		if (info->maxOutputChannels > 0) {
+			//wxLogDebug("%d Device: %s sampleRate: %f maxOutputchannels: %d maxInputchannels: %d", i, info->name, info->defaultSampleRate, info->maxOutputChannels, info->maxInputChannels);
+			devices.push_back(new Device(i));
+		}
+			
+	}
 	error = Pa_OpenDefaultStream(&m_pStream, 0, 2, paInt16, SAMPLE_RATE, 512, paCallback, this);
 
 	if (error != paNoError) {
@@ -87,4 +101,25 @@ unsigned int SoundManager::getSoundData(void *frames, int num_frames)
 void SoundManager::bufferDone()
 {
 	m_pMainFrame->bufferDone();
+}
+
+std::vector<Device *> *SoundManager::getDevices()
+{
+	return &devices;
+}
+
+Device::Device(PaDeviceIndex paDeviceIndex)
+{
+	m_paDeviceIndex = paDeviceIndex;
+}
+
+Device::~Device()
+{
+
+}
+
+wxString Device::getName() const
+{
+	const PaDeviceInfo *info = Pa_GetDeviceInfo(m_paDeviceIndex);
+	return wxString::FromUTF8(info->name);
 }

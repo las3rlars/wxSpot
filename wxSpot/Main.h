@@ -36,9 +36,11 @@ private:
 
 	enum {
 		ID_Settings = 1,
-		ID_Copy_TrackName,
-		ID_Copy_URI,
-		ID_Copy_URL
+		ID_Menu_Add_To_Playlist,
+		ID_Menu_Copy_TrackName,
+		ID_Menu_Copy_URI,
+		ID_Menu_Copy_URL,
+		ID_Menu_Last_Dont_Use
 	};
 
 	void OnExit(wxCommandEvent &event);
@@ -103,7 +105,7 @@ private:
 	LoginDialogue *loginDialogue;
 
 	Playlist *activePlaylist;
-	int activeSongIndex;
+	unsigned int activeSongIndex;
 
 	std::default_random_engine generator;
 

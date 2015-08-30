@@ -17,10 +17,10 @@
 #include "LoginDialogue.h"
 #include "SettingsDialogue.h"
 
-#include "play.xpm"
-#include "pause.xpm"
-#include "step-forward.xpm"
-#include "step-backward.xpm"
+#include "glyphicons-174-play.h"
+#include "glyphicons-175-pause.h"
+#include "glyphicons-171-step-backward.h"
+#include "glyphicons-179-step-forward.h"
 
 
 IMPLEMENT_APP(Main)
@@ -125,7 +125,6 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	});
 
 	songList->Bind(wxEVT_LIST_COL_CLICK, [=](wxListEvent &event) {
-		int index = event.GetIndex();
 		int col = event.GetColumn();
 		if (col == 1) {
 			wxMessageBox("Column 1");
@@ -135,32 +134,44 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	songList->Bind(wxEVT_LIST_ITEM_RIGHT_CLICK, [=](wxListEvent &event) {
 		//wxMenu menu("Play");
 
-		wxMenu popup("Track");
+		Track *track = (Track *)songList->GetItemData(event.GetItem());
 
-		popup.Append(ID_Copy_TrackName, "Copy Track Name");
-		popup.Append(ID_Copy_URI, "Copy Spotify URI");
-		popup.Append(ID_Copy_URL, "Copy Spotify URL");
+		wxMenu *playlists = new wxMenu("Playlists");
+
+		std::vector<SpotifyPlaylist *> *spotifyPlaylists = spotifyManager->getPlaylists();
+
+		for (size_t i = 0; i < spotifyPlaylists->size(); i++) {
+			playlists->Append(ID_Menu_Last_Dont_Use + i, spotifyPlaylists->at(i)->getTitle());
+		}
+
+
+		wxMenu popup(track->getTitle());
+
+		popup.AppendSubMenu(playlists, "Add to playlist");
+
+		popup.Append(ID_Menu_Copy_TrackName, "Copy Track Name");
+		popup.Append(ID_Menu_Copy_URI, "Copy Spotify URI");
+		popup.Append(ID_Menu_Copy_URL, "Copy Spotify URL");
 
 		int selection = songList->GetPopupMenuSelectionFromUser(popup, event.GetPoint());
 
-		Track *track = (Track *)songList->GetItemData(event.GetItem());
 
 		switch (selection) {
 		case wxID_NONE:
 			break;
-		case 2:
+		case ID_Menu_Copy_TrackName:
 			if (wxTheClipboard->Open()) {
 				wxTheClipboard->SetData(new wxTextDataObject(track->getTitle() + " - " + track->getArtist()));
 				wxTheClipboard->Close();
 			}
 			break;
-		case 3:
+		case ID_Menu_Copy_URI:
 			if (wxTheClipboard->Open()) {
 				wxTheClipboard->SetData(new wxTextDataObject(track->getLink()));
 				wxTheClipboard->Close();
 			}
 			break;
-		case 4:
+		case ID_Menu_Copy_URL:
 
 			// typical link spotify:track:XXXXXXXXXX
 			wxStringTokenizer tokenizer(track->getLink(), ":");
@@ -176,6 +187,12 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 				wxTheClipboard->Close();
 			}
 			break;
+		}
+		if (selection > ID_Menu_Last_Dont_Use) {
+			selection -= ID_Menu_Last_Dont_Use;
+
+			wxLogDebug("Trying to add track: %s to Playlist: %s", track->getTitle(), spotifyPlaylists->at(selection)->getTitle());
+			spotifyManager->addTrackToPlaylist(track, spotifyPlaylists->at(selection));
 
 		}
 	});
@@ -198,17 +215,21 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	vertBox->Add(horzBox, 2, wxGROW);
 
-	//wxImage::AddHandler(new wxPNGHandler);
+	wxImage::AddHandler(new wxPNGHandler);
 	//wxImage::AddHandler(new wxJPEGHandler);
 
 	//playImage = wxBitmap(wxImage("glyphicons-174-play.png", wxBITMAP_TYPE_PNG));
-	playImage = wxBitmap(pixmap_play, wxBITMAP_TYPE_XPM);
+	//playImage = wxBitmap(pixmap_play, wxBITMAP_TYPE_XPM);
+	playImage = wxBITMAP_PNG_FROM_DATA(glyphicons_174_play);
 	//pauseImage = wxBitmap(wxImage("glyphicons-175-pause.png", wxBITMAP_TYPE_PNG));
-	pauseImage = wxBitmap(pixmap_pause, wxBITMAP_TYPE_XPM);
+	//pauseImage = wxBitmap(pixmap_pause, wxBITMAP_TYPE_XPM);
+	pauseImage = wxBITMAP_PNG_FROM_DATA(glyphicons_175_pause);
 	//nextImage = wxBitmap(wxImage("glyphicons-179-step-forward.png", wxBITMAP_TYPE_PNG));
-	nextImage = wxBitmap(pixmap_next, wxBITMAP_TYPE_XPM);
+	//nextImage = wxBitmap(pixmap_next, wxBITMAP_TYPE_XPM);
+	nextImage = wxBITMAP_PNG_FROM_DATA(glyphicons_179_step_forward);
 	//prevImage = wxBitmap(wxImage("glyphicons-171-step-backward.png", wxBITMAP_TYPE_PNG));
-	prevImage = wxBitmap(pixmap_prev, wxBITMAP_TYPE_XPM);
+	//prevImage = wxBitmap(pixmap_prev, wxBITMAP_TYPE_XPM);
+	prevImage = wxBITMAP_PNG_FROM_DATA(glyphicons_171_step_backward);
 
 	buttonPlayPause = new wxBitmapButton(panel, wxID_ANY, playImage);
 	buttonPlayPause->Bind(wxEVT_BUTTON, [=](wxCommandEvent &event) {
@@ -271,7 +292,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		spotifyManager->init(spotifyCachePath);
 	}
 	else {
-		SettingsDialogue *dialogue = new SettingsDialogue();
+		SettingsDialogue *dialogue = new SettingsDialogue(soundManager);
 
 		if (dialogue->ShowModal() == wxID_OK) {
 			config->Read("Path", &spotifyCachePath);
@@ -308,7 +329,7 @@ void MainFrame::OnExit(wxCommandEvent &event)
 
 void MainFrame::OnSettings(wxCommandEvent &event)
 {
-	SettingsDialogue *dialogue = new SettingsDialogue();
+	SettingsDialogue *dialogue = new SettingsDialogue(soundManager);
 
 	if (dialogue->ShowModal() == wxID_OK) {
 
@@ -477,7 +498,7 @@ bool MainFrame::next()
 	if (activePlaylist != nullptr) {
 		if (checkBoxShuffle->IsChecked()) {
 			std::uniform_int_distribution<unsigned int> distribution(0, activePlaylist->getTracks()->size() - 1);
-			int newIndex = distribution(generator);
+			unsigned int newIndex = distribution(generator);
 
 			if (newIndex == activeSongIndex) {
 				activeSongIndex = (activeSongIndex + 1) % activePlaylist->getTracks()->size();

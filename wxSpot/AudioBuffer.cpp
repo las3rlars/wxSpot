@@ -6,20 +6,20 @@
 
 #define SAMPLE_RATE 44100
 #define CHANNELS 2
-#define BUFFER_TIME 8
+#define BUFFER_TIME 5
 #define BUFFER_SIZE SAMPLE_RATE * CHANNELS * BUFFER_TIME
 
 #define GROW 1
 //#define TEST 1
 
 
-AudioBuffer::AudioBuffer() : playedFrame(0), writtenFrame(0)
+AudioBuffer::AudioBuffer()
 {
 	buffer.resize(BUFFER_SIZE, 0);
-	rewindPos = INT_MAX;
 	readOffset = 0;
 	writeOffset = 0;
 	stutter = 0;
+	currentFrame = 0;
 }
 
 
@@ -45,7 +45,7 @@ void AudioBuffer::addData(const int16_t *data, const unsigned int samples)
 
 	std::copy(data, data + samples, &buffer[writeOffset]);
 	writeOffset += samples;
-	writtenFrame += samples;
+	currentFrame += samples;
 #elif TEST
 	g_lock.lock();
 	if (0 + samples < readOffset && rewindPos == INT_MAX) {
@@ -92,7 +92,6 @@ int AudioBuffer::readData(int16_t *dest, const unsigned int samples)
 
 	std::copy(&buffer[readOffset], &buffer[readOffset] + samples, dest);
 	readOffset += samples;
-	playedFrame += samples;
 	return samples;
 #elif TEST
 	if (writeOffset == 0) {
@@ -128,13 +127,12 @@ int AudioBuffer::readData(int16_t *dest, const unsigned int samples)
 	}
 	g_lock.unlock();
 #endif
-	playedFrame += samples;
 	return 0;
 }
 
 int AudioBuffer::getSampleDiff()
 {
-	int temp = writtenFrame - playedFrame;
+	int temp = writeOffset - readOffset;
 
 	if (temp < 0) return 0;
 	return temp;
@@ -150,7 +148,7 @@ int AudioBuffer::getStutter()
 
 unsigned int AudioBuffer::getPlayTime()
 {
-	return playedFrame / ((44100 * 2) / 1000);
+	return currentFrame / ((44100 * 2) / 1000);
 }
 
 void AudioBuffer::setPlayTime(unsigned int time)
@@ -158,21 +156,19 @@ void AudioBuffer::setPlayTime(unsigned int time)
 	unsigned int newPlayedFrame = ((44100 * 2) / 1000) * time;
 	
 
-	if (newPlayedFrame < playedFrame) {
-		writtenFrame = 0;
+	if (newPlayedFrame < readOffset) {
+		writeOffset = 0;
 	}
 
-	playedFrame = newPlayedFrame;
-	
+	currentFrame = newPlayedFrame;
 }
 
 void AudioBuffer::reset()
 {
-	wxLogDebug("Resetting audio buffer with writtenFrame: %d playedFrame: %d readOffset: %d writeOffset: %d", writtenFrame, playedFrame, readOffset, writeOffset);
+	wxLogDebug("Resetting audio buffer with readOffset: %d writeOffset: %d", readOffset, writeOffset);
 
 	readOffset = 0;
 	writeOffset = 0;
 	stutter = 0;
-	writtenFrame = 0;
-	playedFrame = 0;
+	currentFrame = 0;
 }

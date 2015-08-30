@@ -2,6 +2,7 @@
 
 
 #include <wx/event.h>
+#include <wx/timer.h>
 
 wxDECLARE_EVENT(SPOTIFY_WAKE_UP_EVENT, wxCommandEvent);
 wxDECLARE_EVENT(SPOTIFY_LOGGED_IN_EVENT, wxCommandEvent);
@@ -59,6 +60,7 @@ public:
 	wxString getSongName();
 
 	bool isTrackAvailable(Track *track);
+	void addTrackToPlaylist(Track *track, SpotifyPlaylist *playlist);
 
 	bool m_isPlaying;
 
@@ -72,6 +74,8 @@ private:
 
 	std::vector<SpotifyPlaylist*> playlists;
 	Playlist searchResults;
+
+	wxTimer processEventsTimer;
 	//std::vector<Playlist *> searchResults;
 	//std::vector<Track*> searchResults;
 

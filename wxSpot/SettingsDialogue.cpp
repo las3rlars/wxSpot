@@ -2,10 +2,12 @@
 
 #include <wx/statline.h>
 #include "Main.h"
+#include "SoundManager.h"
 #include <wx/config.h>
 
-SettingsDialogue::SettingsDialogue() : wxDialog(nullptr, wxID_ANY, "Settings")
+SettingsDialogue::SettingsDialogue(SoundManager *soundManager) : wxDialog(nullptr, wxID_ANY, "Settings")
 {
+	this->m_soundManager = soundManager;
 	this->SetSizeHints(wxDefaultSize, wxDefaultSize);
 	wxBoxSizer *bSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -37,6 +39,14 @@ SettingsDialogue::SettingsDialogue() : wxDialog(nullptr, wxID_ANY, "Settings")
 	bSizer->Add(vSizer);
 
 	mStaticLine = new wxStaticLine(this, wxID_ANY);
+	wxArrayString strings;
+	std::vector<Device *> *devices = soundManager->getDevices();
+	for (size_t i = 0; i < devices->size(); i++) {
+		strings.Add(devices->at(i)->getName());
+	}
+
+	mDeviceChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, strings);
+	bSizer->Add(mDeviceChoice);
 	bSizer->Add(mStaticLine, 0, wxEXPAND | wxALL, 5);
 
 	wxBoxSizer *hSizer2 = new wxBoxSizer(wxHORIZONTAL);

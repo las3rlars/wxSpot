@@ -26,7 +26,7 @@ std::vector<Track*> *Playlist::getTracks()
 
 void Playlist::clearTracks()
 {
-	for (unsigned int i = 0; i < tracks.size(); i++) {
+	for (size_t i = 0; i < tracks.size(); i++) {
 		delete tracks.at(i);
 	}
 
@@ -57,6 +57,7 @@ bool SpotifyPlaylist::isShared()
 {
 	return sp_playlist_is_collaborative(m_pPlaylist);
 }
+
 
 sp_playlist *SpotifyPlaylist::getSpPlaylist()
 {

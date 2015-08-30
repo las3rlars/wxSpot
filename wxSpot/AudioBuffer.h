@@ -22,12 +22,9 @@ public:
 	unsigned int channels;
 	unsigned int readOffset;
 	unsigned int writeOffset;
-	unsigned int rewindPos;
+	unsigned int currentFrame;
 	unsigned int stutter;
 
-	unsigned int playedFrame;
-	unsigned int writtenFrame;
 	std::vector<int16_t> buffer;
-	std::deque<int16_t> queue;
 };
 

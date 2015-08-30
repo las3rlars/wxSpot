@@ -7,9 +7,6 @@
 #include <wx/log.h>
 
 
-#include <cstdint>
-#include <iostream>
-
 wxDEFINE_EVENT(SPOTIFY_WAKE_UP_EVENT, wxCommandEvent);
 wxDEFINE_EVENT(SPOTIFY_LOGGED_IN_EVENT, wxCommandEvent);
 wxDEFINE_EVENT(SPOTIFY_STARTED_PLAYING_EVENT, wxCommandEvent);
@@ -21,6 +18,7 @@ wxDEFINE_EVENT(SPOTIFY_PLAYLIST_REMOVED_EVENT, wxCommandEvent);
 wxDEFINE_EVENT(SPOTIFY_PLAYLIST_RENAMED_EVENT, wxCommandEvent);
 wxDEFINE_EVENT(SPOTIFY_PLAYLIST_STATE_CHANGED_EVENT, wxCommandEvent);
 wxDEFINE_EVENT(SPOTIFY_SEARCH_RESULTS_EVENT, wxCommandEvent);
+
 
 
 const size_t g_appkey_size = sizeof(g_appkey);
@@ -108,8 +106,23 @@ static void SP_CALLCONV callbacks_playlist_state_changed(sp_playlist *pl, void *
 			return;
 		}
 	}
+}
 
-	
+static void SP_CALLCONV callbacks_playlist_metadata_updated(sp_playlist *pl, void *userData)
+{
+	SpotifyManager *manager = GetManagerFromUserdata(userData);
+
+	std::vector<SpotifyPlaylist*> *playlists = manager->getPlaylists();
+
+	for (unsigned int i = 0; i < playlists->size(); i++) {
+		if (playlists->at(i)->getSpPlaylist() == pl) {
+			//manager->sendEvent(SPOTIFY_PLAYLIST_STATE_CHANGED_EVENT, i);
+			wxLogDebug("Playlist metadata updated: %d", i);
+
+			return;
+		}
+	}
+
 }
 
 static sp_playlist_callbacks pl_callbacks = {
@@ -117,7 +130,9 @@ static sp_playlist_callbacks pl_callbacks = {
 	&callback_tracks_removed,
 	&callback_tracks_moved,
 	&callbacks_playlist_renamed,
-	&callbacks_playlist_state_changed
+	&callbacks_playlist_state_changed,
+	nullptr,
+	&callbacks_playlist_metadata_updated
 };
 
 static void SP_CALLCONV callback_playlist_added(sp_playlistcontainer *pc, sp_playlist *pl, int position, void *userData)
@@ -140,12 +155,27 @@ static void SP_CALLCONV callback_playlist_removed(sp_playlistcontainer *pc, sp_p
 static void SP_CALLCONV callback_container_loaded(sp_playlistcontainer *pc, void *userData)
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
-	sp_session *session = manager->getSession();
 	int num = sp_playlistcontainer_num_playlists(pc);
 	for (int i = 0; i < num; i++) {
 
 		
 		sp_playlist *spPlaylist = sp_playlistcontainer_playlist(pc, i);
+
+		std::vector<SpotifyPlaylist *> *existingPlaylists = manager->getPlaylists();
+
+		bool alreadyHave = false;
+		for (size_t i = 0; i < existingPlaylists->size(); i++) {
+			if (existingPlaylists->at(i)->getSpPlaylist() == spPlaylist) {
+				alreadyHave = true;
+				break;
+			}
+		}
+
+		if (alreadyHave) {
+			wxLogDebug("Playlist already exists - ignoring");
+			continue;
+
+		}
 
 		sp_playlist_add_ref(spPlaylist);
 
@@ -359,6 +389,9 @@ void tryToPlay(sp_session *sess)
 
 SpotifyManager::SpotifyManager(MainFrame *main) : m_pMainFrame(main), m_isPlaying(false), m_pSession(nullptr)
 {
+	processEventsTimer.Bind(wxEVT_TIMER, [=](wxTimerEvent &event) {
+		processEvents();
+	});
 }
 
 
@@ -440,8 +473,10 @@ void SpotifyManager::setEventHandler(wxEvtHandler *eventHandler)
 
 void SpotifyManager::processEvents()
 {
-	int timeout = 500;
+	int timeout = 0;
 	sp_session_process_events(m_pSession, &timeout);
+	wxLogDebug("process events timeout: %d", timeout);
+	processEventsTimer.Start(timeout, true);
 }
 
 void SpotifyManager::sendEvent(const wxEventType type, int cargo) 
@@ -573,4 +608,13 @@ bool SpotifyManager::isTrackAvailable(Track *track)
 	}
 
 	return false;
+}
+
+void SpotifyManager::addTrackToPlaylist(Track *track, SpotifyPlaylist *playlist)
+{
+	sp_track *spTrack = track->getSpTrack();
+	sp_playlist *spPlaylist = playlist->getSpPlaylist();
+
+	sp_playlist_add_tracks(spPlaylist, &spTrack, 1, sp_playlist_num_tracks(spPlaylist), m_pSession);
+
 }
