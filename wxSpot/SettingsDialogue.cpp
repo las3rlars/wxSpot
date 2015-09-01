@@ -41,11 +41,20 @@ SettingsDialogue::SettingsDialogue(SoundManager *soundManager) : wxDialog(nullpt
 	mStaticLine = new wxStaticLine(this, wxID_ANY);
 	wxArrayString strings;
 	std::vector<Device *> *devices = soundManager->getDevices();
+
+	int deviceSelection = 0;
+	int deviceIndex = 0;
+	MainFrame::config->Read("DeviceIndex", &deviceIndex, 0);
+
 	for (size_t i = 0; i < devices->size(); i++) {
 		strings.Add(devices->at(i)->getName());
+		if (devices->at(i)->getIndex() == deviceIndex) {
+			deviceSelection = i;
+		}
 	}
 
 	mDeviceChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, strings);
+	mDeviceChoice->SetSelection(deviceSelection);
 	bSizer->Add(mDeviceChoice);
 	bSizer->Add(mStaticLine, 0, wxEXPAND | wxALL, 5);
 
@@ -54,6 +63,7 @@ SettingsDialogue::SettingsDialogue(SoundManager *soundManager) : wxDialog(nullpt
 	mOkButton = new wxButton(this, wxID_OK, _("OK"));
 	mOkButton->Bind(wxEVT_BUTTON, [=](wxCommandEvent &event) {
 		MainFrame::config->Write("Path", mPathTextCtrl->GetValue());
+		MainFrame::config->Write("DeviceIndex", devices->at(mDeviceChoice->GetSelection())->getIndex());
 		EndModal(wxID_OK);
 	});
 

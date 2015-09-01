@@ -34,6 +34,20 @@ SoundManager::SoundManager(MainFrame *mainFrame)
 		wxLogError("PortAudio Error: %s", Pa_GetErrorText(error));
 	}
 
+
+	streamParams.channelCount = 2;
+	streamParams.sampleFormat = paInt16;
+	streamParams.suggestedLatency = 0.25;
+	streamParams.hostApiSpecificStreamInfo = nullptr;
+
+	PaDeviceIndex deviceCount = Pa_GetDeviceCount();
+	PaDeviceIndex defaultDevice = Pa_GetDefaultOutputDevice();
+	wxLogDebug("Default output device: %d", defaultDevice);
+	for (PaDeviceIndex i = 0; i < deviceCount; i++) {
+		if (deviceSupported(i)) {
+			devices.push_back(new Device(i));
+		}
+	}
 }
 
 
@@ -53,26 +67,30 @@ SoundManager::~SoundManager()
 
 }
 
-void SoundManager::init()
+void SoundManager::init(int deviceIndex)
 {
+	streamParams.device = deviceIndex;
+
+
 	PaError error;
 
-	PaDeviceIndex deviceCount = Pa_GetDeviceCount();
-	PaDeviceIndex defaultDevice = Pa_GetDefaultOutputDevice();
-	wxLogDebug("Default output device: %d", defaultDevice);
-	for (PaDeviceIndex i = 0; i < deviceCount; i++) {
-		const PaDeviceInfo *info = Pa_GetDeviceInfo(i);
-		if (info->maxOutputChannels > 0) {
-			//wxLogDebug("%d Device: %s sampleRate: %f maxOutputchannels: %d maxInputchannels: %d", i, info->name, info->defaultSampleRate, info->maxOutputChannels, info->maxInputChannels);
-			devices.push_back(new Device(i));
-		}
-			
-	}
-	error = Pa_OpenDefaultStream(&m_pStream, 0, 2, paInt16, SAMPLE_RATE, 512, paCallback, this);
+	//error = Pa_OpenDefaultStream(&m_pStream, 0, 2, paInt16, SAMPLE_RATE, 512, paCallback, this);
+	error = Pa_OpenStream(&m_pStream, nullptr, &streamParams, SAMPLE_RATE, 512, paNoFlag, paCallback,this);
 
 	if (error != paNoError) {
 		wxLogError("PortAudio Error: %s", Pa_GetErrorText(error));
 	}
+}
+
+bool SoundManager::deviceSupported(int deviceIndex)
+{
+	streamParams.device = deviceIndex;
+
+	if (Pa_IsFormatSupported(nullptr, &streamParams, 44100.0) == paFormatIsSupported) {
+		return true;
+	}
+
+	return false;
 }
 
 void SoundManager::end()
@@ -121,5 +139,5 @@ Device::~Device()
 wxString Device::getName() const
 {
 	const PaDeviceInfo *info = Pa_GetDeviceInfo(m_paDeviceIndex);
-	return wxString::FromUTF8(info->name);
+	return wxString(info->name);
 }

@@ -269,21 +269,24 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	soundManager = new SoundManager(this);
 
-	soundManager->init();
-
 	spotifyManager->setEventHandler(GetEventHandler());
 
 	wxString spotifyCachePath;
+	int deviceIndex;
 
-	if (config->Read("Path", &spotifyCachePath) && wxDirExists(spotifyCachePath)) {
+	if (config->Read("Path", &spotifyCachePath) && wxDirExists(spotifyCachePath) &&
+		config->Read("DeviceIndex", &deviceIndex) && soundManager->deviceSupported(deviceIndex)) {
 		spotifyManager->init(spotifyCachePath);
+		soundManager->init(deviceIndex);
 	}
 	else {
 		SettingsDialogue *dialogue = new SettingsDialogue(soundManager);
 
 		if (dialogue->ShowModal() == wxID_OK) {
 			config->Read("Path", &spotifyCachePath);
+			config->Read("DeviceIndex", &deviceIndex);
 			spotifyManager->init(spotifyCachePath);
+			soundManager->init(deviceIndex);
 		}
 		delete dialogue;
 
