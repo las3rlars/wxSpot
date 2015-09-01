@@ -98,6 +98,7 @@ static void SP_CALLCONV callbacks_playlist_state_changed(sp_playlist *pl, void *
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 
+	wxLogDebug("Playlist state changed: %s", sp_playlist_name(pl));
 	std::vector<SpotifyPlaylist*> *playlists = manager->getPlaylists();
 
 	for (unsigned int i = 0; i < playlists->size(); i++) {
@@ -111,6 +112,8 @@ static void SP_CALLCONV callbacks_playlist_state_changed(sp_playlist *pl, void *
 static void SP_CALLCONV callbacks_playlist_metadata_updated(sp_playlist *pl, void *userData)
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
+
+	wxLogDebug("Playlist metadata updated: %s", sp_playlist_name(pl));
 
 	std::vector<SpotifyPlaylist*> *playlists = manager->getPlaylists();
 
@@ -189,9 +192,7 @@ static void SP_CALLCONV callback_container_loaded(sp_playlistcontainer *pc, void
 		}
 		else {
 			wxLogDebug("Playlist not loaded");
-			//std::cout << "playlist not loaded";
 		}
-		//Log::err(L"Adding playlist: %s\n", playlist->getTitle());
 		wxLogDebug("Adding playlist: %s", playlist->getTitle());
 		manager->addPlaylist(playlist);
 	}
@@ -223,14 +224,6 @@ static void SP_CALLCONV callback_logged_in(sp_session *sess, sp_error error)
 
 	sp_playlistcontainer_add_callbacks(pc, &pc_callbacks, GetManagerFromSession(sess));
 
-
-	//sp_link *link = sp_link_create_from_string("spotify:track:0PF8QsRoGiAYEk2PPuTtuP");
-
-	//g_track = sp_link_as_track(link);
-
-	//sp_track_add_ref(g_track);
-
-	//tryToPlay(sess);
 }
 
 static void SP_CALLCONV callback_logged_out(sp_session *sess)
@@ -241,7 +234,6 @@ static void SP_CALLCONV callback_logged_out(sp_session *sess)
 static void SP_CALLCONV callback_connection_error(sp_session *sess, sp_error error)
 {
 	wxLogError("Connection error: %s", sp_error_message(error));
-	//std::cerr << "connection error" << sp_error_message(error) << std::endl;
 }
 
 static void SP_CALLCONV callback_notify_main_thread(sp_session *sess)
@@ -252,7 +244,6 @@ static void SP_CALLCONV callback_notify_main_thread(sp_session *sess)
 
 static void SP_CALLCONV callback_log_message(sp_session *sess, const char *data)
 {
-	//std::cout << data;
 	wxLogDebug("Log message: %s", data);
 }
 
@@ -260,8 +251,6 @@ static void SP_CALLCONV callback_metadata_updated(sp_session *sess)
 {
 	//tryToPlay(sess);
 	wxLogDebug("Meta updated");
-
-	//std::cout << "meta updated";
 }
 
 static int SP_CALLCONV callback_music_delivery(sp_session *sess, const sp_audioformat *format, const void *frames, int num_frames)
@@ -304,6 +293,7 @@ static void SP_CALLCONV callback_end_of_track(sp_session *sess)
 	SpotifyManager *manager = GetManagerFromSession(sess);
 	manager->sendEvent(SPOTIFY_END_OF_TRACK_EVENT);
 	wxLogDebug("End of track callback");
+	//g_track = nullptr;
 
 }
 
@@ -337,12 +327,8 @@ static void SP_CALLCONV callback_search_complete(sp_search *search, void *userDa
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 	if (sp_search_error(search) == SP_ERROR_OK) {
-		//std::vector<Track*> *searchResults = manager->getSearchResults();
-		//searchResults->clear();
 		Playlist *searchResults = manager->getSearchResults();
 		for (int i = 0; i < sp_search_num_tracks(search); i++) {
-			
-			//searchResults->push_back(new Track(sp_search_track(search, i)));
 			searchResults->addTrack(sp_search_track(search, i));
 		}
 
@@ -363,14 +349,12 @@ void tryToPlay(sp_session *sess)
 	sp_error err = sp_track_error(g_track);
 	if (err != SP_ERROR_OK) {
 		wxLogDebug("Error with track");
-		//std::cerr << "error with track";
 		return;
 	}
 
 	err = sp_session_player_load(sess, g_track);
 	if (err != SP_ERROR_OK) {
 		wxLogDebug("Error loading track");
-		//std::cerr << "error loading track";
 		return;
 	}
 
@@ -378,7 +362,6 @@ void tryToPlay(sp_session *sess)
 	err = sp_session_player_play(sess, true);
 	if (err != SP_ERROR_OK) {
 		wxLogError("Error playing track");
-		//std::cerr << "error playing track";
 		return;
 	}
 
@@ -397,11 +380,7 @@ SpotifyManager::SpotifyManager(MainFrame *main) : m_pMainFrame(main), m_isPlayin
 
 SpotifyManager::~SpotifyManager()
 {
-	for (unsigned int i = 0; i < playlists.size(); i++) {
-		delete playlists.at(i);
-	}
 
-	playlists.clear();
 }
 
 void SpotifyManager::init(wxString cachePath)
@@ -457,6 +436,13 @@ void SpotifyManager::end()
 		sp_session_player_unload(m_pSession);
 		g_track = nullptr;
 	}
+
+
+	for (unsigned int i = 0; i < playlists.size(); i++) {
+		delete playlists.at(i);
+	}
+
+	playlists.clear();
 
 	if (m_pSession != nullptr) {
 		sp_session_logout(m_pSession);

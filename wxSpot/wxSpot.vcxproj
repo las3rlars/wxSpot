@@ -19,7 +19,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -38,31 +38,45 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>
+      </SDLCheck>
       <AdditionalIncludeDirectories>D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib\mswud;D:\projekt\sdk\wxWidgets-3.0.2\include;D:\projekt\SDK\libspotify-12.1.51-win32-release\include;D:\Download\Web\pa_stable_v19_20140130\portaudio\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <MinimalRebuild>true</MinimalRebuild>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>D:\Download\Web\pa_stable_v19_20140130\portaudio\build\msvc\Win32\Debug;D:\projekt\SDK\libspotify-12.1.51-win32-release\lib;D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>portaudio_x86.lib;libspotify.lib;wxmsw30ud_core.lib;wxbase30ud.lib;wxpngd.lib;wxzlibd.lib;wxregexud.lib;wxexpatd.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;wsock32.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateMapFile>
+      </GenerateMapFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
+      <SDLCheck>
+      </SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib\mswud;D:\projekt\sdk\wxWidgets-3.0.2\include;D:\projekt\SDK\libspotify-12.1.51-win32-release\include;D:\Download\Web\pa_stable_v19_20140130\portaudio\include</AdditionalIncludeDirectories>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <AdditionalIncludeDirectories>D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib\mswu;D:\projekt\sdk\wxWidgets-3.0.2\include;D:\projekt\SDK\libspotify-12.1.51-win32-release\include;D:\Download\Web\pa_stable_v19_20140130\portaudio\include</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -70,13 +84,15 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>D:\Download\Web\pa_stable_v19_20140130\portaudio\build\msvc\Win32\Release;D:\projekt\SDK\libspotify-12.1.51-win32-release\lib;D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>portaudio_x86.lib;libspotify.lib;wxmsw30u_core.lib;wxbase30u.lib;wxpng.lib;wxzlib.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>portaudio_x86.lib;libspotify.lib;wxmsw30u_core.lib;wxbase30u.lib;wxpng.lib;wxzlib.lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -87,6 +103,7 @@
     <ClInclude Include="Playlist.h" />
     <ClInclude Include="ProgressIndicator.h" />
     <ClInclude Include="SettingsDialogue.h" />
+    <ClInclude Include="SongListCtrl.h" />
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="SpotifyManager.h" />
     <ClInclude Include="Track.h" />
@@ -98,6 +115,7 @@
     <ClCompile Include="Playlist.cpp" />
     <ClCompile Include="ProgressIndicator.cpp" />
     <ClCompile Include="SettingsDialogue.cpp" />
+    <ClCompile Include="SongListCtrl.cpp" />
     <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="SpotifyManager.cpp" />
     <ClCompile Include="Track.cpp" />

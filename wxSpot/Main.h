@@ -13,7 +13,8 @@
 class SpotifyManager;
 class SoundManager;
 
-class wxListView;
+//class wxListView;
+class SongListCtrl;
 class wxTreeCtrl;
 class Playlist;
 class LoginDialogue;
@@ -80,7 +81,8 @@ private:
 
 	wxTextCtrl *searchTextCtrl;
 	wxTreeCtrl *playlistTree;
-	wxListView *songList;
+	//wxListView *songList;
+	SongListCtrl *songList;
 
 	wxButton *buttonPlayPause;
 	wxButton *buttonNext;

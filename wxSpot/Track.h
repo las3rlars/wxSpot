@@ -10,7 +10,7 @@ public:
 	Track(sp_track *track);
 	~Track();
 
-	wxString getLink();
+	wxString getLink() const;
 	wxString getTitle() const;
 	wxString getAlbum();
 	wxString getArtist() const;

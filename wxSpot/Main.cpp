@@ -10,6 +10,8 @@
 #include <wx/tokenzr.h>
 #include <wx/log.h>
 
+#include "SongListCtrl.h"
+
 #include "ProgressIndicator.h"
 
 #include "SoundManager.h"
@@ -78,10 +80,9 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	vertBox = new wxBoxSizer(wxVERTICAL);
 	bottomHorzBox = new wxBoxSizer(wxHORIZONTAL);
 
+	spotifyManager = new SpotifyManager(this);
 
-	songList = new wxListView(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
-	songList->AppendColumn(wxString("Track"), wxLIST_FORMAT_LEFT, 280);
-	songList->AppendColumn(wxString("Artist"), wxLIST_FORMAT_LEFT, 270);
+	songList = new SongListCtrl(panel, spotifyManager);
 	songList->SetClientData(nullptr);
 
 	playlistTree = new wxTreeCtrl(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
@@ -90,35 +91,21 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	playlistTree->Bind(wxEVT_TREE_SEL_CHANGED, [=](wxTreeEvent &event) {
 		wxTreeItemId item = event.GetItem();
 		std::vector<SpotifyPlaylist*> *playlists = spotifyManager->getPlaylists();
-		songList->Freeze();
-		songList->DeleteAllItems();
-		songList->SetClientData(nullptr);
 
 		for (unsigned int i = 0; i < playlists->size(); i++) {
 			if (playlists->at(i)->getTreeItemId() == item) {
-				songList->SetClientData(playlists->at(i));
-				std::vector<Track*> *tracks = playlists->at(i)->getTracks();
-				for (unsigned int j = 0; j < tracks->size(); j++) {
-					long item = songList->InsertItem(songList->GetItemCount(), tracks->at(j)->getTitle());
-					songList->SetItem(item, 1, tracks->at(j)->getArtist());
-					songList->SetItemPtrData(item, (wxUIntPtr)tracks->at(j));
-					if (spotifyManager->isTrackAvailable(tracks->at(j)) == false) {
-						songList->SetItemTextColour(item, *wxLIGHT_GREY);
-					}
-				}
+				songList->setPlaylist(playlists->at(i));
 				break;
 			}
 		}
 
-		songList->Thaw();
 	});
 
 
 	songList->Bind(wxEVT_LIST_ITEM_ACTIVATED, [=](wxListEvent &event) {
 		int index = event.GetIndex();
 
-		wxListItem item = event.GetItem();
-		Track *track = (Track *)songList->GetItemData(item);
+		Track *track = songList->getTrack(index);
 		activePlaylist = (Playlist *)songList->GetClientData();
 		spotifyManager->playTrack(track);
 		activeSongIndex = index;
@@ -134,7 +121,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	songList->Bind(wxEVT_LIST_ITEM_RIGHT_CLICK, [=](wxListEvent &event) {
 		//wxMenu menu("Play");
 
-		Track *track = (Track *)songList->GetItemData(event.GetItem());
+		Track *track = songList->getTrack(event.GetIndex());
 
 		wxMenu *playlists = new wxMenu("Playlists");
 
@@ -193,6 +180,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 			wxLogDebug("Trying to add track: %s to Playlist: %s", track->getTitle(), spotifyPlaylists->at(selection)->getTitle());
 			spotifyManager->addTrackToPlaylist(track, spotifyPlaylists->at(selection));
+			spotifyPlaylists->at(selection)->addTrack(track->getSpTrack());
 
 		}
 	});
@@ -283,7 +271,6 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	soundManager->init();
 
-	spotifyManager = new SpotifyManager(this);
 	spotifyManager->setEventHandler(GetEventHandler());
 
 	wxString spotifyCachePath;
@@ -439,20 +426,8 @@ void MainFrame::OnSpotifyPlaylistStateChangedEvent(wxCommandEvent &event)
 void MainFrame::OnSpotifySearchResultsEvent(wxCommandEvent &event)
 {
 	
-	//std::vector<Track*> *tracks = spotifyManager->getSearchResults();
 	Playlist *searchResults = spotifyManager->getSearchResults();
-	std::vector<Track *> *tracks = searchResults->getTracks();
-
-	songList->Freeze();
-	songList->DeleteAllItems();
-	songList->SetClientData(searchResults);
-	for (unsigned int j = 0; j < tracks->size(); j++) {
-		long item = songList->InsertItem(songList->GetItemCount(), tracks->at(j)->getTitle());
-		songList->SetItem(item, 1, tracks->at(j)->getArtist());
-		songList->SetItemPtrData(item, (wxUIntPtr)tracks->at(j));
-	}
-	songList->Thaw();
-
+	songList->setPlaylist(searchResults);
 }
 
 void MainFrame::OnSpotifyLoggedInEvent(wxCommandEvent &event)
@@ -541,8 +516,8 @@ bool MainFrame::prev()
 	}
 
 	return true;
-
 }
+
 
 void MainFrame::bufferDone()
 {

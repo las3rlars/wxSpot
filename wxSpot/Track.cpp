@@ -14,7 +14,7 @@ Track::~Track()
 	sp_track_release(m_pTrack);
 }
 
-wxString Track::getLink()
+wxString Track::getLink() const
 {
 	char buffer[128];
 
