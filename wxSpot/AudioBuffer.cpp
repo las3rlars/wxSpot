@@ -1,25 +1,18 @@
 #include "AudioBuffer.h"
 
-//#include <mutex>
-#include <iterator>
 #include <wx/log.h>
+#include <algorithm> // std::min
 
 #define SAMPLE_RATE 44100
 #define CHANNELS 2
-#define BUFFER_TIME 5
+#define BUFFER_TIME 1
 #define BUFFER_SIZE SAMPLE_RATE * CHANNELS * BUFFER_TIME
-
-#define GROW 1
-//#define TEST 1
-
 
 AudioBuffer::AudioBuffer()
 {
-	buffer.resize(BUFFER_SIZE, 0);
-	readOffset = 0;
-	writeOffset = 0;
-	stutter = 0;
-	currentFrame = 0;
+	currentBuffer = getBufferFromPool();
+	queuedBuffers.push_back(currentBuffer);
+	reset();
 }
 
 
@@ -27,107 +20,80 @@ AudioBuffer::~AudioBuffer()
 {
 }
 
-//std::mutex g_lock;
+std::shared_ptr<int16_t> AudioBuffer::getBufferFromPool()
+{
+	if (bufferPool.empty()) {
+		bufferPool.push_front(std::shared_ptr<int16_t>(new int16_t[BUFFER_SIZE], [](int16_t *p) { delete[] p; }));
+	}
+
+	auto front = bufferPool.front();
+	bufferPool.pop_front();
+	return front;
+}
 
 void AudioBuffer::addData(const int16_t *data, const unsigned int samples)
 {
-
 	if (samples == 0) {
 		readOffset = 0;
 		writeOffset = 0;
 		stutter = 0;
+		writeBufferOffset = 0;
+		readBufferOffset = 0;
+		queuedBuffers.clear();
+		currentBuffer = getBufferFromPool();
+		queuedBuffers.push_back(currentBuffer);
 		return;
 	}
-#ifdef GROW	
-	if (writeOffset + samples > buffer.size()) {
-		buffer.resize(buffer.size() + BUFFER_SIZE, 0);
-	}
 
-	std::copy(data, data + samples, &buffer[writeOffset]);
-	writeOffset += samples;
-	currentFrame += samples;
-#elif TEST
-	g_lock.lock();
-	if (0 + samples < readOffset && rewindPos == INT_MAX) {
-		rewindPos = writeOffset;
-		writeOffset = 0;
-	} else if (writeOffset + samples > rewindPos) {
-		if (writeOffset + samples > buffer.size()) {
-			buffer.resize(buffer.size() + BUFFER_SIZE, 0);
+	unsigned int samplesLeft = samples;
+	while (samplesLeft > 0) {
+
+		if (writeBufferOffset == BUFFER_SIZE) {
+			currentBuffer = getBufferFromPool();
+
+			queuedBuffers.push_back(currentBuffer);
+			writeBufferOffset = 0;
 		}
+		int dataSize = std::min(samplesLeft, (unsigned int)BUFFER_SIZE - writeBufferOffset);
 
+		memcpy(currentBuffer.get() + writeBufferOffset, data + (samples - samplesLeft), dataSize * 2);
+		samplesLeft -= dataSize;
+		writeOffset += dataSize;
+		writeBufferOffset += dataSize;
 
-	std::copy(data, data + samples, &buffer[writeOffset]);
-	writeOffset += samples;
-
-	writtenFrame += samples;
-	g_lock.unlock();
-#else
-	g_lock.lock();
-	//queue.insert(it, 2, 20);
-	//queue.insert(it, samples, data);
-	std::copy(data, data + samples, std::back_inserter(queue));
-	/*for (int i = 0; i < samples; i++) {
-		
-		queue.push_back(data[i]);
-	}*/
-	g_lock.unlock();
-	writtenFrame += samples;
-#endif
-	
+	}
 }
 
 int AudioBuffer::readData(int16_t *dest, const unsigned int samples)
 {
-#ifdef GROW
-	if (readOffset + samples > buffer.size()) {
+	unsigned int samplesLeft = samples;
+
+	if (readOffset + samples >= writeOffset) {
 		stutter++;
 		readOffset = 0;
 	}
 
-	if (readOffset > writeOffset) {
-		stutter++;
-		readOffset = 0;
-	}
+	while(samplesLeft > 0) {
+		if (readBufferOffset == BUFFER_SIZE) {
+			bufferPool.push_front(currentBuffer);
+			queuedBuffers.pop_front();
+			readBufferOffset = 0;
+		}
+		if (queuedBuffers.empty())
+			return 0;
 
-	std::copy(&buffer[readOffset], &buffer[readOffset] + samples, dest);
+		auto buffer = queuedBuffers.front();
+
+		unsigned int dataSize = std::min(samplesLeft, BUFFER_SIZE - readBufferOffset);
+
+		memcpy(dest + (samples - samplesLeft), buffer.get() + readBufferOffset, dataSize * 2);
+		samplesLeft -= dataSize;
+		readBufferOffset += dataSize;
+
+	}
 	readOffset += samples;
+	currentFrame += samples;
 	return samples;
-#elif TEST
-	if (writeOffset == 0) {
-		return 0;
-	}
-
-	/*if (readOffset + samples > buffer.size()) {
-		stutter++;
-		readOffset = 0;
-	}*/
-
-	int diff = 0;
-
-	g_lock.lock();
-
-	if (readOffset == rewindPos) {
-		readOffset = 0;
-		rewindPos = INT_MAX;
-	}
-
-	std::copy(&buffer[readOffset], &buffer[readOffset] + samples - diff, dest);
-	readOffset += samples - diff;
-	g_lock.unlock();
-
-	playedFrame += samples;
-#else
-	g_lock.lock();
-
-	//for (int i = samples; i > 0; i--) {
-	for (int i = 0; i < samples; i++) {
-		dest[i] = queue.front();
-		queue.pop_front();
-	}
-	g_lock.unlock();
-#endif
-	return 0;
 }
 
 int AudioBuffer::getSampleDiff()
@@ -171,4 +137,7 @@ void AudioBuffer::reset()
 	writeOffset = 0;
 	stutter = 0;
 	currentFrame = 0;
+	readBufferOffset = 0;
+	writeBufferOffset = 0;
+
 }

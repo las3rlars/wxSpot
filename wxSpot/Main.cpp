@@ -122,6 +122,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		//wxMenu menu("Play");
 
 		Track *track = songList->getTrack(event.GetIndex());
+		activePlaylist = (Playlist *)songList->GetClientData();
 
 		wxMenu *playlists = new wxMenu("Playlists");
 
@@ -135,7 +136,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		wxMenu popup(track->getTitle());
 
 		popup.AppendSubMenu(playlists, "Add to playlist");
-
+		popup.Append(ID_Menu_Delete_Track, "Delete track");
 		popup.Append(ID_Menu_Copy_TrackName, "Copy Track Name");
 		popup.Append(ID_Menu_Copy_URI, "Copy Spotify URI");
 		popup.Append(ID_Menu_Copy_URL, "Copy Spotify URL");
@@ -145,6 +146,11 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 		switch (selection) {
 		case wxID_NONE:
+			break;
+		case ID_Menu_Delete_Track:
+			activePlaylist->removeTrack(event.GetIndex());
+			songList->SetItemCount(activePlaylist->getTracks()->size());
+			songList->RefreshItems(0, activePlaylist->getTracks()->size() - 1);
 			break;
 		case ID_Menu_Copy_TrackName:
 			if (wxTheClipboard->Open()) {
@@ -301,10 +307,10 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 MainFrame::~MainFrame()
 {
-	spotifyManager->end();
-
 	soundManager->stop();
 	soundManager->end();
+
+	spotifyManager->end();
 
 	delete spotifyManager;
 	delete soundManager;
@@ -319,17 +325,15 @@ void MainFrame::OnExit(wxCommandEvent &event)
 
 void MainFrame::OnSettings(wxCommandEvent &event)
 {
-	SettingsDialogue *dialogue = new SettingsDialogue(soundManager);
-
+	std::unique_ptr<SettingsDialogue> dialogue = std::make_unique<SettingsDialogue>(soundManager);
 	if (dialogue->ShowModal() == wxID_OK) {
 
 	}
-	delete dialogue;
 }
 
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
-	wxMessageBox("wxSpot 0.7 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
+	wxMessageBox("wxSpot 0.8 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)
@@ -356,8 +360,6 @@ void MainFrame::OnSpotifyStoppedPlayingEvent(wxCommandEvent &event)
 
 	timerStatusUpdate.Stop();
 	soundManager->stop();
-
-	//wxTopLevelWindow::SetTitle("Not currently playing");
 }
 
 void MainFrame::OnSpotifyEndOfTrackEvent(wxCommandEvent &event)
@@ -395,6 +397,7 @@ void MainFrame::OnSpotifyLoadedContainerEvent(wxCommandEvent &event)
 void MainFrame::OnSpotifyPlaylistAddedEvent(wxCommandEvent &event)
 {
 	// Maybe add new if we don't have it already
+	wxLogDebug("Playlist added event");
 }
 
 void MainFrame::OnSpotifyPlaylistRenamedEvent(wxCommandEvent &event)
@@ -542,7 +545,7 @@ bool Main::OnInit()
 		return false;
 	}
 
-	//_CrtSetBreakAlloc(32784);
+	//_CrtSetBreakAlloc(4223);
 
 	mainFrame = new MainFrame(_("wxSpot"), wxDefaultPosition, wxSize(800, 600));
 

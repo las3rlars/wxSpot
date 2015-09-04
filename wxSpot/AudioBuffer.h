@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
-//#include <queue>
-#include <deque>
+#include <memory>
+#include <forward_list>
+#include <list>
 
 class AudioBuffer
 {
@@ -19,12 +19,19 @@ public:
 	void setPlayTime(unsigned int time);
 	void reset();
 
-	unsigned int channels;
+private:
+	std::shared_ptr<int16_t> getBufferFromPool();
+	unsigned short int channels;
 	unsigned int readOffset;
 	unsigned int writeOffset;
 	unsigned int currentFrame;
-	unsigned int stutter;
+	unsigned short int stutter;
 
-	std::vector<int16_t> buffer;
+	unsigned int readBufferOffset;
+	unsigned int writeBufferOffset;
+
+	std::shared_ptr<int16_t> currentBuffer;
+	std::forward_list<std::shared_ptr<int16_t>> bufferPool;
+	std::list<std::shared_ptr<int16_t>> queuedBuffers;
 };
 

@@ -139,5 +139,5 @@ Device::~Device()
 wxString Device::getName() const
 {
 	const PaDeviceInfo *info = Pa_GetDeviceInfo(m_paDeviceIndex);
-	return wxString(info->name);
+	return wxString::FromUTF8(info->name);
 }

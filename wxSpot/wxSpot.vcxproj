@@ -48,7 +48,7 @@
       <SDLCheck>
       </SDLCheck>
       <AdditionalIncludeDirectories>D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib\mswud;D:\projekt\sdk\wxWidgets-3.0.2\include;D:\projekt\SDK\libspotify-12.1.51-win32-release\include;D:\Download\Web\pa_stable_v19_20140130\portaudio\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <MultiProcessorCompilation>
@@ -74,7 +74,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib\mswu;D:\projekt\sdk\wxWidgets-3.0.2\include;D:\projekt\SDK\libspotify-12.1.51-win32-release\include;D:\Download\Web\pa_stable_v19_20140130\portaudio\include</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>

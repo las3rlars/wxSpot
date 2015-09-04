@@ -1,11 +1,14 @@
 #include "Track.h"
 
+#include <wx/log.h>
 #include <wx/translation.h>
 
-Track::Track(sp_track *track)
+Track::Track(sp_track *track) : m_pTrack(track)
 {
-	m_pTrack = track;
-	sp_track_add_ref(m_pTrack);
+	sp_error error = sp_track_add_ref(m_pTrack);
+	if (error != SP_ERROR_OK) {
+		wxLogDebug("Error increasing ref count");
+	}
 }
 
 
@@ -50,7 +53,7 @@ wxString Track::getTitle() const
 	
 }
 
-wxString Track::getAlbum()
+wxString Track::getAlbum() const
 {
 	return wxString("TODO");
 }

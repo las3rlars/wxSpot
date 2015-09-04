@@ -38,6 +38,7 @@ private:
 	enum {
 		ID_Settings = 1,
 		ID_Menu_Add_To_Playlist,
+		ID_Menu_Delete_Track,
 		ID_Menu_Copy_TrackName,
 		ID_Menu_Copy_URI,
 		ID_Menu_Copy_URL,

@@ -12,7 +12,7 @@ public:
 
 	wxString getLink() const;
 	wxString getTitle() const;
-	wxString getAlbum();
+	wxString getAlbum() const;
 	wxString getArtist() const;
 	bool isAvailable() const;
 

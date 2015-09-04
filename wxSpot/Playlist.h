@@ -19,13 +19,16 @@ public:
 	wxTreeItemId getTreeItemId() { return treeItem; }
 
 	void addTrack(sp_track *track);
+	virtual void removeTrack(const int index);
 	std::vector<Track*> *getTracks();
 	void clearTracks();
 
-private:
-	wxTreeItemId treeItem;
+protected:
 	
 	std::vector<Track*> tracks;
+private:
+	wxTreeItemId treeItem;
+
 };
 
 class SpotifyPlaylist : public Playlist
@@ -35,6 +38,8 @@ public:
 	~SpotifyPlaylist();
 
 	sp_playlist *getSpPlaylist();
+
+	void removeTrack(const int index) override;
 
 	wxString getTitle() const;
 	bool isShared();

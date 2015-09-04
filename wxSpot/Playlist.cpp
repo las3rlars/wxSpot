@@ -1,5 +1,6 @@
 #include "Playlist.h"
 
+#include <memory>
 
 
 Playlist::Playlist()
@@ -19,6 +20,13 @@ void Playlist::addTrack(sp_track *track)
 	tracks.push_back(new Track(track));
 }
 
+void Playlist::removeTrack(const int index)
+{
+	Track *track = tracks.at(index);
+	delete track;
+	tracks.erase(tracks.begin() + index);
+}
+
 std::vector<Track*> *Playlist::getTracks()
 {
 	return &tracks;
@@ -26,10 +34,7 @@ std::vector<Track*> *Playlist::getTracks()
 
 void Playlist::clearTracks()
 {
-	for (size_t i = 0; i < tracks.size(); i++) {
-		delete tracks.at(i);
-	}
-
+	std::for_each(tracks.begin(), tracks.end(), std::default_delete<Track>());
 	tracks.clear();
 }
 
@@ -43,6 +48,14 @@ SpotifyPlaylist::SpotifyPlaylist(sp_playlist *playlist)
 SpotifyPlaylist::~SpotifyPlaylist()
 {
 	sp_playlist_release(m_pPlaylist);
+}
+
+void SpotifyPlaylist::removeTrack(const int index)
+{
+	sp_playlist_remove_tracks(m_pPlaylist, &index, 1);
+	Track *track = tracks.at(index);
+	delete track;
+	tracks.erase(tracks.begin() + index);
 }
 
 wxString SpotifyPlaylist::getTitle() const

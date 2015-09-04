@@ -257,7 +257,9 @@ static int SP_CALLCONV callback_music_delivery(sp_session *sess, const sp_audiof
 {
 	SpotifyManager *manager = GetManagerFromSession(sess);
 
-	manager->addSoundData(frames, num_frames);
+	if (frames != nullptr) {
+		manager->addSoundData(frames, num_frames);
+	}
 
 	return num_frames;
 }
@@ -436,11 +438,10 @@ void SpotifyManager::end()
 		sp_session_player_unload(m_pSession);
 		g_track = nullptr;
 	}
+	int temp;
+	sp_session_process_events(m_pSession, &temp);
 
-
-	for (unsigned int i = 0; i < playlists.size(); i++) {
-		delete playlists.at(i);
-	}
+	std::for_each(playlists.begin(), playlists.end(), std::default_delete<SpotifyPlaylist>());
 
 	playlists.clear();
 

@@ -53,7 +53,6 @@ public:
 	void search(const wxString searchstring);
 
 	std::vector<SpotifyPlaylist*> *getPlaylists() { return &playlists; }
-	//std::vector<Track*> *getSearchResults() { return &searchResults; }
 	Playlist *getSearchResults() { return &searchResults; }
 
 	unsigned int getSongLength();
@@ -69,15 +68,11 @@ public:
 private:
 	sp_session *m_pSession;
 	MainFrame *m_pMainFrame;
-	sp_track *m_spTrack;
 	wxEvtHandler *m_eventHandler;
 
 	std::vector<SpotifyPlaylist*> playlists;
 	Playlist searchResults;
 
 	wxTimer processEventsTimer;
-	//std::vector<Playlist *> searchResults;
-	//std::vector<Track*> searchResults;
-
 };
 
