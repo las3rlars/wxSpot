@@ -1,9 +1,9 @@
-#include "LoginDialogue.h"
+#include "LoginDialog.h"
 
 #include <wx/statline.h>
 #include "SpotifyManager.h"
 
-LoginDialogue::LoginDialogue(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxDialog(parent, id, title, pos, size, style)
+LoginDialog::LoginDialog(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size) : wxDialog(parent, id, title, pos, size, wxCAPTION | wxSTAY_ON_TOP)
 {
 	this->SetSizeHints(wxDefaultSize, wxDefaultSize);
 
@@ -49,27 +49,27 @@ LoginDialogue::LoginDialogue(wxWindow* parent, wxWindowID id, const wxString& ti
 }
 
 
-LoginDialogue::~LoginDialogue()
+LoginDialog::~LoginDialog()
 {
 }
 
-void LoginDialogue::setSpotifyManager(SpotifyManager *manager)
+void LoginDialog::setSpotifyManager(SpotifyManager *manager)
 {
 	this->spotifyManager = manager;
 }
-void LoginDialogue::OnLoginClicked(wxCommandEvent &event)
+void LoginDialog::OnLoginClicked(wxCommandEvent &event)
 {
 	spotifyManager->login(mUsernameTextCtrl->GetValue(), mPasswordTextCtrl->GetValue());
 }
 
-void LoginDialogue::OnLoggedInEvent(wxCommandEvent &event)
+void LoginDialog::OnLoggedInEvent(wxCommandEvent &event)
 {
 	EndModal(wxID_OK);
 	
 }
 
-BEGIN_EVENT_TABLE(LoginDialogue, wxDialog)
-EVT_BUTTON(ID_LOGIN_BUTTON, LoginDialogue::OnLoginClicked)
-EVT_COMMAND(wxID_ANY, SPOTIFY_LOGGED_IN_EVENT, LoginDialogue::OnLoggedInEvent)
+BEGIN_EVENT_TABLE(LoginDialog, wxDialog)
+EVT_BUTTON(ID_LOGIN_BUTTON, LoginDialog::OnLoginClicked)
+EVT_COMMAND(wxID_ANY, SPOTIFY_LOGGED_IN_EVENT, LoginDialog::OnLoggedInEvent)
 
 END_EVENT_TABLE()

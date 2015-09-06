@@ -13,17 +13,19 @@
 #include "SongListCtrl.h"
 
 #include "ProgressIndicator.h"
+#include "Visualizer.h"
 
 #include "SoundManager.h"
 #include "SpotifyManager.h"
-#include "LoginDialogue.h"
-#include "SettingsDialogue.h"
+#include "LoginDialog.h"
+#include "SettingsDialog.h"
 
 #include "glyphicons-174-play.h"
 #include "glyphicons-175-pause.h"
 #include "glyphicons-171-step-backward.h"
 #include "glyphicons-179-step-forward.h"
 
+#include "fix_fft.h"
 
 IMPLEMENT_APP(Main)
 
@@ -85,7 +87,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	songList = new SongListCtrl(panel, spotifyManager);
 	songList->SetClientData(nullptr);
 
-	playlistTree = new wxTreeCtrl(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+	playlistTree = new wxTreeCtrl(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE | wxTR_HIDE_ROOT);
 	playlistTree->AddRoot("Playlists");
 
 	playlistTree->Bind(wxEVT_TREE_SEL_CHANGED, [=](wxTreeEvent &event) {
@@ -107,20 +109,14 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 		Track *track = songList->getTrack(index);
 		activePlaylist = (Playlist *)songList->GetClientData();
-		spotifyManager->playTrack(track);
-		activeSongIndex = index;
-	});
-
-	songList->Bind(wxEVT_LIST_COL_CLICK, [=](wxListEvent &event) {
-		int col = event.GetColumn();
-		if (col == 1) {
-			wxMessageBox("Column 1");
+		if (spotifyManager->playTrack(track)) {
+			highLightTrack(track);
 		}
+		activeSongIndex = index;
+		spotifyManager->processEvents();
 	});
 
 	songList->Bind(wxEVT_LIST_ITEM_RIGHT_CLICK, [=](wxListEvent &event) {
-		//wxMenu menu("Play");
-
 		Track *track = songList->getTrack(event.GetIndex());
 		activePlaylist = (Playlist *)songList->GetClientData();
 
@@ -205,7 +201,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	songList->Layout();
 
-	horzBox->Add(songList, 3, wxGROW);
+	horzBox->Add(songList, 4, wxGROW);
 
 	vertBox->Add(horzBox, 2, wxGROW);
 
@@ -225,7 +221,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	//prevImage = wxBitmap(pixmap_prev, wxBITMAP_TYPE_XPM);
 	prevImage = wxBITMAP_PNG_FROM_DATA(glyphicons_171_step_backward);
 
-	buttonPlayPause = new wxBitmapButton(panel, wxID_ANY, playImage);
+	buttonPlayPause = new wxBitmapButton(panel, wxID_ANY, playImage, wxDefaultPosition, wxSize(26, 26));
 	buttonPlayPause->Bind(wxEVT_BUTTON, [=](wxCommandEvent &event) {
 		playPause();
 	});
@@ -259,10 +255,13 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	
 	checkBoxShuffle = new wxCheckBox(panel, wxID_ANY, _("Shuffle"));
 
-	bottomHorzBox->Add(textCurrentProgressTime, 0, wxALL, 2);
-	bottomHorzBox->Add(progressIndicator, wxSizerFlags(1).Expand().Border(wxALL, 2));
-	bottomHorzBox->Add(textTotalTime, 0, wxALL, 2);
-	bottomHorzBox->Add(checkBoxShuffle, 0, wxALL, 2);
+	visualizer = new Visualizer(panel);
+
+	bottomHorzBox->Add(textCurrentProgressTime, 0, wxALIGN_CENTER_VERTICAL | wxALL, 2);
+	bottomHorzBox->Add(progressIndicator, 1, wxALIGN_CENTER_VERTICAL | wxALL | wxEXPAND, 2);
+	bottomHorzBox->Add(textTotalTime, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
+	bottomHorzBox->Add(checkBoxShuffle, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
+	bottomHorzBox->Add(visualizer, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
 	bottomHorzBox->Layout();
 
 
@@ -286,7 +285,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		soundManager->init(deviceIndex);
 	}
 	else {
-		SettingsDialogue *dialogue = new SettingsDialogue(soundManager);
+		SettingsDialog *dialogue = new SettingsDialog(soundManager);
 
 		if (dialogue->ShowModal() == wxID_OK) {
 			config->Read("Path", &spotifyCachePath);
@@ -297,12 +296,9 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		delete dialogue;
 
 	}
-	
 
-
-
+	audioBuffer.setVisualizer(visualizer);
 	showLoginDialog();
-
 }
 
 MainFrame::~MainFrame()
@@ -325,7 +321,7 @@ void MainFrame::OnExit(wxCommandEvent &event)
 
 void MainFrame::OnSettings(wxCommandEvent &event)
 {
-	std::unique_ptr<SettingsDialogue> dialogue = std::make_unique<SettingsDialogue>(soundManager);
+	std::unique_ptr<SettingsDialog> dialogue = std::make_unique<SettingsDialog>(soundManager);
 	if (dialogue->ShowModal() == wxID_OK) {
 
 	}
@@ -438,8 +434,8 @@ void MainFrame::OnSpotifySearchResultsEvent(wxCommandEvent &event)
 
 void MainFrame::OnSpotifyLoggedInEvent(wxCommandEvent &event)
 {
-	if (loginDialogue != nullptr) {
-		loginDialogue->GetEventHandler()->QueueEvent(event.Clone());
+	if (loginDialog != nullptr) {
+		loginDialog->GetEventHandler()->QueueEvent(event.Clone());
 	}
 }
 
@@ -456,14 +452,14 @@ void MainFrame::OnTimerEvent(wxTimerEvent &event)
 
 void MainFrame::showLoginDialog()
 {
-	loginDialogue = new LoginDialogue();
+	loginDialog = new LoginDialog();
 
-	loginDialogue->setSpotifyManager(spotifyManager);
+	loginDialog->setSpotifyManager(spotifyManager);
 
 
-	if (loginDialogue->ShowModal() == wxID_OK) {
-		delete loginDialogue;
-		loginDialogue = nullptr;
+	if (loginDialog->ShowModal() == wxID_OK) {
+		delete loginDialog;
+		loginDialog = nullptr;
 	}
 
 }
@@ -496,7 +492,9 @@ bool MainFrame::next()
 		else {
 			activeSongIndex++;
 		}
-		spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex));
+		if (spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex))) {
+			highLightTrack(activePlaylist->getTracks()->at(activeSongIndex));
+		}
 		spotifyManager->processEvents();
 
 	}
@@ -515,7 +513,9 @@ bool MainFrame::prev()
 		}
 		else {
 			activeSongIndex--;
-			spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex));
+			if (spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex))) {
+				highLightTrack(activePlaylist->getTracks()->at(activeSongIndex));
+			}
 			spotifyManager->processEvents();
 
 		}
@@ -528,6 +528,18 @@ bool MainFrame::prev()
 void MainFrame::bufferDone()
 {
 	next();
+}
+
+void MainFrame::highLightTrack(Track *track)
+{
+	Playlist *playlist = (Playlist*)songList->GetClientData();
+	auto tracks = playlist->getTracks();
+	for (unsigned int i = 0; i < tracks->size(); i++) {
+		if (track == tracks->at(i)) {
+			songList->SetItemState(i, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+			break;
+		}
+	}
 }
 
 Main::Main()

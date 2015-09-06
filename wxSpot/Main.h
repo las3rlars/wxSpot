@@ -13,13 +13,13 @@
 class SpotifyManager;
 class SoundManager;
 
-//class wxListView;
 class SongListCtrl;
 class wxTreeCtrl;
 class Playlist;
-class LoginDialogue;
+class LoginDialog;
 class ProgressIndicator;
-
+class Track;
+class Visualizer;
 
 class MainFrame : public wxFrame
 {
@@ -66,6 +66,8 @@ private:
 	void playPause();
 	bool next();
 	bool prev();
+	void highLightTrack(Track *track);
+
 
 
 	wxPanel *panel;
@@ -82,13 +84,11 @@ private:
 
 	wxTextCtrl *searchTextCtrl;
 	wxTreeCtrl *playlistTree;
-	//wxListView *songList;
 	SongListCtrl *songList;
 
 	wxButton *buttonPlayPause;
 	wxButton *buttonNext;
 	wxButton *buttonPrev;
-	//wxSlider *progressSlider;
 	ProgressIndicator *progressIndicator;
 
 	wxStaticText *textCurrentProgressTime;
@@ -96,7 +96,7 @@ private:
 
 	wxCheckBox *checkBoxShuffle;
 
-	//wxMenu *popup;
+	Visualizer *visualizer;
 
 	wxTimer timerStatusUpdate;
 
@@ -105,14 +105,12 @@ private:
 	wxBitmap nextImage;
 	wxBitmap prevImage;
 	
-	LoginDialogue *loginDialogue;
+	LoginDialog *loginDialog;
 
 	Playlist *activePlaylist;
 	unsigned int activeSongIndex;
 
 	std::default_random_engine generator;
-
-
 
 	DECLARE_EVENT_TABLE()
 };

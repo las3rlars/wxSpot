@@ -7,13 +7,16 @@ Playlist::Playlist()
 {
 }
 
-
-
 Playlist::~Playlist()
 {
 	clearTracks();
 }
 
+void Playlist::clearTracks()
+{
+	std::for_each(tracks.begin(), tracks.end(), std::default_delete<Track>());
+	tracks.clear();
+}
 
 void Playlist::addTrack(sp_track *track)
 {
@@ -31,13 +34,6 @@ std::vector<Track*> *Playlist::getTracks()
 {
 	return &tracks;
 }
-
-void Playlist::clearTracks()
-{
-	std::for_each(tracks.begin(), tracks.end(), std::default_delete<Track>());
-	tracks.clear();
-}
-
 
 SpotifyPlaylist::SpotifyPlaylist(sp_playlist *playlist)
 {
@@ -70,7 +66,6 @@ bool SpotifyPlaylist::isShared()
 {
 	return sp_playlist_is_collaborative(m_pPlaylist);
 }
-
 
 sp_playlist *SpotifyPlaylist::getSpPlaylist()
 {

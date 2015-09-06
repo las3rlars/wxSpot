@@ -330,6 +330,7 @@ static void SP_CALLCONV callback_search_complete(sp_search *search, void *userDa
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 	if (sp_search_error(search) == SP_ERROR_OK) {
 		Playlist *searchResults = manager->getSearchResults();
+		searchResults->clearTracks();
 		for (int i = 0; i < sp_search_num_tracks(search); i++) {
 			searchResults->addTrack(sp_search_track(search, i));
 		}
@@ -443,8 +444,6 @@ void SpotifyManager::end()
 
 	std::for_each(playlists.begin(), playlists.end(), std::default_delete<SpotifyPlaylist>());
 
-	playlists.clear();
-
 	if (m_pSession != nullptr) {
 		sp_session_logout(m_pSession);
 		sp_session_release(m_pSession);
@@ -462,7 +461,7 @@ void SpotifyManager::processEvents()
 {
 	int timeout = 0;
 	sp_session_process_events(m_pSession, &timeout);
-	wxLogDebug("process events timeout: %d", timeout);
+	//wxLogInfo("process events timeout: %d", timeout);
 	processEventsTimer.Start(timeout, true);
 }
 
@@ -517,11 +516,13 @@ bool SpotifyManager::playTrack(Track *track)
 		g_track = nullptr;
 		m_isPlaying = false;
 	}
-	g_track = track->getSpTrack();
 	m_pMainFrame->getAudioBuffer()->reset();
 
+	g_track = track->getSpTrack();
 	tryToPlay(m_pSession);
+
 	return true;
+
 }
 
 void SpotifyManager::playPause()

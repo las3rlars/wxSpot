@@ -37,7 +37,7 @@ SoundManager::SoundManager(MainFrame *mainFrame)
 
 	streamParams.channelCount = 2;
 	streamParams.sampleFormat = paInt16;
-	streamParams.suggestedLatency = 0.25;
+	streamParams.suggestedLatency = 0.05;
 	streamParams.hostApiSpecificStreamInfo = nullptr;
 
 	PaDeviceIndex deviceCount = Pa_GetDeviceCount();
@@ -45,7 +45,7 @@ SoundManager::SoundManager(MainFrame *mainFrame)
 	wxLogDebug("Default output device: %d", defaultDevice);
 	for (PaDeviceIndex i = 0; i < deviceCount; i++) {
 		if (deviceSupported(i)) {
-			devices.push_back(new Device(i));
+			devices.push_back(std::make_shared<Device>(i));
 		}
 	}
 }
@@ -53,16 +53,10 @@ SoundManager::SoundManager(MainFrame *mainFrame)
 
 SoundManager::~SoundManager()
 {
-	for (size_t i = 0; i < devices.size(); i++) {
-		delete devices.at(i);
-	}
-
-	devices.clear();
-
 	PaError error = Pa_Terminate();
 
 	if (error != paNoError) {
-		std::cerr << "PortAudio error: " << Pa_GetErrorText(error) << std::endl;
+		wxLogError("PortAudio error: %s", Pa_GetErrorText(error));
 	}
 
 }
@@ -70,7 +64,6 @@ SoundManager::~SoundManager()
 void SoundManager::init(int deviceIndex)
 {
 	streamParams.device = deviceIndex;
-
 
 	PaError error;
 
@@ -121,7 +114,7 @@ void SoundManager::bufferDone()
 	m_pMainFrame->bufferDone();
 }
 
-std::vector<Device *> *SoundManager::getDevices()
+std::vector<std::shared_ptr<Device>> *SoundManager::getDevices()
 {
 	return &devices;
 }

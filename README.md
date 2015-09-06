@@ -1,7 +1,7 @@
 # wxSpot
 wxSpot - a native ui frontend for Spotify
 
-![alt tag](http://vps188527.ovh.net/~viktor/wxSpot/wxSpot_1.png)
+![alt tag](http://vps188527.ovh.net/~viktor/wxSpot/wxSpot2.png)
 
 AppKey.h is not included - it only contains the app key from spotify. I'm not really sure if it's ok to put
 it in public or not

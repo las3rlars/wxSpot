@@ -8,8 +8,8 @@ wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxL
 	spotifyManager(spotifyManager)
 {
 	AppendColumn(wxString("Track"), wxLIST_FORMAT_LEFT, 280);
-	AppendColumn(wxString("Artist"), wxLIST_FORMAT_LEFT);
-	AppendColumn(wxString("Album"), wxLIST_FORMAT_LEFT);
+	AppendColumn(wxString("Artist"), wxLIST_FORMAT_LEFT, 170);
+	AppendColumn(wxString("Album"), wxLIST_FORMAT_LEFT, 170);
 
 	grey.SetTextColour(*wxLIGHT_GREY);
 }

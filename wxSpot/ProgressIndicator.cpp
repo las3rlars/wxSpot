@@ -15,6 +15,7 @@ ProgressIndicator::ProgressIndicator(wxWindow *parent) : wxWindow(parent, wxID_A
 	height = 20;
 	value = 0;
 	SetMinSize(wxSize(width, height));
+	SetMaxSize(wxSize(-1, height));
 }
 
 
@@ -54,17 +55,12 @@ void ProgressIndicator::render(wxDC &dc)
 
 void ProgressIndicator::mouseDown(wxMouseEvent &event)
 {
-
 	this->value = (float)event.GetPosition().x / (float)width;
 	paintNow();
 
-	//wxScrollEvent scrollEvent;
 	wxCommandEvent pressEvent = wxCommandEvent(PI_SCROLL_CHANGED);
-	//scrollEvent.
 	
 	QueueEvent(pressEvent.Clone());
-	//GetParent()->GetEventHandler()->QueueEvent(pressEvent.Clone());
-	//GetParent()->QueueEvent(&pressEvent);
 }
 
 void ProgressIndicator::SetValue(float value)

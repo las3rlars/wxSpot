@@ -8,11 +8,11 @@
 class wxStaticLine;
 class SpotifyManager;
 
-class LoginDialogue : public wxDialog
+class LoginDialog : public wxDialog
 {
 public:
-	LoginDialogue(wxWindow* parent = nullptr, wxWindowID id = wxID_ANY, const wxString& title = _("Login"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(-1, -1), long style = wxDEFAULT_DIALOG_STYLE);
-	~LoginDialogue();
+	LoginDialog(wxWindow* parent = nullptr, wxWindowID id = wxID_ANY, const wxString& title = _("Login"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(-1, -1));
+	~LoginDialog();
 
 	void setSpotifyManager(SpotifyManager *spotifyManager);
 

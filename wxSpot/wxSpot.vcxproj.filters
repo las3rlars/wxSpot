@@ -33,12 +33,6 @@
     <ClInclude Include="Track.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LoginDialogue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SettingsDialogue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="AppKey.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -46,6 +40,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SongListCtrl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fix_fft.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Visualizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -68,16 +74,22 @@
     <ClCompile Include="Track.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LoginDialogue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SettingsDialogue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ProgressIndicator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SongListCtrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fix_fft.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Visualizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

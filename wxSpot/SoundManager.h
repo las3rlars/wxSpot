@@ -28,7 +28,8 @@ public:
 	unsigned int getSoundData(void *data, int num_frames);
 	void bufferDone();
 	
-	std::vector<Device *> *getDevices();
+	//std::vector<Device *> *getDevices();
+	std::vector<std::shared_ptr<Device>> *getDevices();
 
 private:
 	PaStreamParameters streamParams;
@@ -36,6 +37,7 @@ private:
 	MainFrame *m_pMainFrame;
 	PaStream *m_pStream;
 
-	std::vector<Device *> devices;
+	std::vector<std::shared_ptr<Device>> devices;
+	//std::vector<Device *> devices;
 };
 

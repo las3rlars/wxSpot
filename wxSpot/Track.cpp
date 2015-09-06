@@ -55,7 +55,13 @@ wxString Track::getTitle() const
 
 wxString Track::getAlbum() const
 {
-	return wxString("TODO");
+	if (sp_track_is_loaded(m_pTrack)) {
+		sp_album *album = sp_track_album(m_pTrack);
+		if (sp_album_is_loaded(album)) {
+			return wxString::FromUTF8(sp_album_name(album));
+		}
+	}
+	return wxString("Loading");
 }
 
 wxString Track::getArtist() const
