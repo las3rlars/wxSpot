@@ -13,7 +13,6 @@ public:
 	AudioBuffer();
 	~AudioBuffer();
 
-	void setVisualizer(Visualizer *visualizer);
 	void addData(const int16_t *data, const unsigned int samples);
 	int readData(int16_t *dest, const unsigned int samples);
 	int getSampleDiff();
@@ -21,8 +20,6 @@ public:
 	unsigned int getPlayTime();
 	void setPlayTime(unsigned int time);
 	void reset();
-
-	void updateFFT(int16_t *buffer, unsigned int size);
 
 private:
 	std::shared_ptr<int16_t> getBufferFromPool();
@@ -34,10 +31,6 @@ private:
 
 	unsigned int readBufferOffset;
 	unsigned int writeBufferOffset;
-
-	int16_t fftBuffer[512];
-
-	Visualizer *m_visualizer;
 
 	std::shared_ptr<int16_t> currentBuffer;
 	std::forward_list<std::shared_ptr<int16_t>> bufferPool;

@@ -54,6 +54,9 @@
     <ClInclude Include="Visualizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MilkDropVisualizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -90,6 +93,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Visualizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MilkDropVisualizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

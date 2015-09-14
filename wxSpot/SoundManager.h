@@ -3,6 +3,9 @@
 #include "Main.h"
 #include "portaudio.h"
 
+
+class MilkDropVisualizer;
+
 class Device
 {
 public:
@@ -28,6 +31,7 @@ public:
 	unsigned int getSoundData(void *data, int num_frames);
 	void bufferDone();
 	
+	void setMilkDropVisualizer(MilkDropVisualizer *visualizer);
 	//std::vector<Device *> *getDevices();
 	std::vector<std::shared_ptr<Device>> *getDevices();
 
@@ -38,6 +42,7 @@ private:
 	PaStream *m_pStream;
 
 	std::vector<std::shared_ptr<Device>> devices;
-	//std::vector<Device *> devices;
+
+	MilkDropVisualizer *m_milkDropVisualizer;
 };
 

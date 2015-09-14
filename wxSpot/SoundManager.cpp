@@ -1,6 +1,7 @@
 #include "SoundManager.h"
 
 #include "AudioBuffer.h"
+#include "MilkDropVisualizer.h"
 
 #define SAMPLE_RATE (44100)
 
@@ -25,7 +26,7 @@ static int paCallback(const void *input, void *output, unsigned long frameCount,
 	
 }
 
-SoundManager::SoundManager(MainFrame *mainFrame)
+SoundManager::SoundManager(MainFrame *mainFrame) : m_milkDropVisualizer(nullptr)
 {
 	m_pMainFrame = mainFrame;
 	PaError error = Pa_Initialize();
@@ -105,13 +106,25 @@ unsigned int SoundManager::getSoundData(void *frames, int num_frames)
 {
 	AudioBuffer *buffer = m_pMainFrame->getAudioBuffer();
 
-	return buffer->readData((int16_t *)frames, num_frames);
+	int len = buffer->readData((int16_t *)frames, num_frames);
+	
+	
+	//return buffer->readData((int16_t *)frames, num_frames);
+	if (m_milkDropVisualizer != nullptr)
+		m_milkDropVisualizer->updatePCM((int16_t *)frames);
+
+	return len;
 
 }
 
 void SoundManager::bufferDone()
 {
 	m_pMainFrame->bufferDone();
+}
+
+void SoundManager::setMilkDropVisualizer(MilkDropVisualizer *visualizer)
+{
+	m_milkDropVisualizer = visualizer;
 }
 
 std::vector<std::shared_ptr<Device>> *SoundManager::getDevices()

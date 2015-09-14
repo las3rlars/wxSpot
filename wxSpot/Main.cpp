@@ -19,6 +19,7 @@
 #include "SpotifyManager.h"
 #include "LoginDialog.h"
 #include "SettingsDialog.h"
+#include "MilkDropVisualizer.h"
 
 #include "glyphicons-174-play.h"
 #include "glyphicons-175-pause.h"
@@ -44,6 +45,7 @@ EVT_COMMAND(wxID_ANY, SPOTIFY_LOGGED_IN_EVENT, MainFrame::OnSpotifyLoggedInEvent
 
 EVT_MENU(wxID_EXIT, MainFrame::OnExit)
 EVT_MENU(ID_Settings, MainFrame::OnSettings)
+EVT_MENU(ID_MilkDrop, MainFrame::OnMilkDrop)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_TIMER(wxID_ANY, MainFrame::OnTimerEvent)
 
@@ -56,12 +58,16 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	: wxFrame((wxFrame *) nullptr, -1, title, pos, size),
 	timerStatusUpdate(this, wxID_ANY),
 	activeSongIndex(0),
-	activePlaylist(nullptr)
+	activePlaylist(nullptr),
+	milkDropFrame(nullptr)
 
 {
 
 	wxMenu *menuFile = new wxMenu();
 	menuFile->Append(wxID_EXIT);
+
+	wxMenu *visualizationsFile = new wxMenu();
+	visualizationsFile->Append(ID_MilkDrop, "&MilkDrop");
 
 	wxMenu *optionsFile = new wxMenu();
 	optionsFile->Append(ID_Settings, "&Settings...\tCtrl-S");
@@ -71,6 +77,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	wxMenuBar *menuBar = new wxMenuBar();
 	menuBar->Append(menuFile, "&File");
+	menuBar->Append(visualizationsFile, "&Visualizations");
 	menuBar->Append(optionsFile, "&Settings");
 	menuBar->Append(menuHelp, "&Help");
 
@@ -78,9 +85,9 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	panel = new wxPanel(this, wxID_ANY);
 
-	horzBox = new wxBoxSizer(wxHORIZONTAL);
-	vertBox = new wxBoxSizer(wxVERTICAL);
-	bottomHorzBox = new wxBoxSizer(wxHORIZONTAL);
+	auto horzBox = new wxBoxSizer(wxHORIZONTAL);
+	auto vertBox = new wxBoxSizer(wxVERTICAL);
+	auto bottomHorzBox = new wxBoxSizer(wxHORIZONTAL);
 
 	spotifyManager = new SpotifyManager(this);
 
@@ -193,7 +200,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		spotifyManager->search(searchTextCtrl->GetValue());
 	});
 
-	searchPlaylistBox = new wxBoxSizer(wxVERTICAL);
+	auto searchPlaylistBox = new wxBoxSizer(wxVERTICAL);
 
 	searchPlaylistBox->Add(searchTextCtrl, wxSizerFlags(0).Expand().Border(wxALL, 2));
 	searchPlaylistBox->Add(playlistTree, 1, wxGROW);
@@ -297,7 +304,6 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	}
 
-	audioBuffer.setVisualizer(visualizer);
 	showLoginDialog();
 }
 
@@ -327,9 +333,34 @@ void MainFrame::OnSettings(wxCommandEvent &event)
 	}
 }
 
+void MainFrame::OnMilkDrop(wxCommandEvent &event)
+{
+	if (milkDropFrame != nullptr) return;
+
+	milkDropFrame = new wxFrame(this, wxID_ANY, wxString("wxSpot - MilkDrop"), wxDefaultPosition, wxSize(512, 512));
+
+	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 24, 0 };
+
+	milkDropFrame->Bind(wxEVT_CLOSE_WINDOW, [=](wxCloseEvent &event) {
+		soundManager->setMilkDropVisualizer(nullptr);
+		event.Skip();
+		milkDropFrame = nullptr;
+	});
+
+	auto milkDropVisualizer = new MilkDropVisualizer(milkDropFrame, args);
+
+	milkDropVisualizer->Bind(wxEVT_KEY_DOWN, [=](wxKeyEvent &event) {
+		if (event.GetModifiers() == wxMOD_ALT && event.GetKeyCode() == WXK_RETURN) {
+			milkDropFrame->ShowFullScreen(!milkDropFrame->IsFullScreen());
+		}
+	});
+	soundManager->setMilkDropVisualizer(milkDropVisualizer);
+	milkDropFrame->Show();
+}
+
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
-	wxMessageBox("wxSpot 0.8 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
+	wxMessageBox("wxSpot 0.9 by Viktor Müntzing\nVisualizations from projectM", "About", wxOK | wxICON_INFORMATION);
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)

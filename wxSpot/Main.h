@@ -37,6 +37,7 @@ private:
 
 	enum {
 		ID_Settings = 1,
+		ID_MilkDrop,
 		ID_Menu_Add_To_Playlist,
 		ID_Menu_Delete_Track,
 		ID_Menu_Copy_TrackName,
@@ -47,6 +48,7 @@ private:
 
 	void OnExit(wxCommandEvent &event);
 	void OnSettings(wxCommandEvent &event);
+	void OnMilkDrop(wxCommandEvent &event);
 	void OnAbout(wxCommandEvent &event);
 	void OnSpotifyWakeUpEvent(wxCommandEvent &event);
 	void OnSpotifyStartedPlayingEvent(wxCommandEvent &event);
@@ -72,15 +74,9 @@ private:
 
 	wxPanel *panel;
 
-	wxBoxSizer *horzBox;
-	wxBoxSizer *vertBox;
-	wxBoxSizer *bottomHorzBox;
-
 	SpotifyManager *spotifyManager;
 	SoundManager *soundManager;
 	AudioBuffer audioBuffer;
-
-	wxBoxSizer *searchPlaylistBox;
 
 	wxTextCtrl *searchTextCtrl;
 	wxTreeCtrl *playlistTree;
@@ -97,6 +93,7 @@ private:
 	wxCheckBox *checkBoxShuffle;
 
 	Visualizer *visualizer;
+	wxFrame *milkDropFrame;
 
 	wxTimer timerStatusUpdate;
 

@@ -2,6 +2,7 @@
 
 #include <wx/log.h>
 #include <algorithm> // std::min
+#include <cmath>
 #include "fix_fft.h"
 #include "Visualizer.h"
 
@@ -12,7 +13,6 @@
 
 AudioBuffer::AudioBuffer()
 {
-	m_visualizer = nullptr;
 	currentBuffer = getBufferFromPool();
 	queuedBuffers.push_back(currentBuffer);
 	reset();
@@ -23,10 +23,6 @@ AudioBuffer::~AudioBuffer()
 {
 }
 
-void AudioBuffer::setVisualizer(Visualizer *visualizer)
-{
-	m_visualizer = visualizer;
-}
 std::shared_ptr<int16_t> AudioBuffer::getBufferFromPool()
 {
 	if (bufferPool.empty()) {
@@ -100,7 +96,6 @@ int AudioBuffer::readData(int16_t *dest, const unsigned int samples)
 	}
 	readOffset += samples;
 	currentFrame += samples;
-	updateFFT(dest, samples);
 	return samples;
 }
 
@@ -134,6 +129,12 @@ void AudioBuffer::setPlayTime(unsigned int time)
 		writeOffset = 0;
 	}
 
+	while (!queuedBuffers.empty() && queuedBuffers.front() != currentBuffer) {
+		bufferPool.push_front(queuedBuffers.front());
+		queuedBuffers.pop_front();
+	}
+
+
 	currentFrame = newPlayedFrame;
 }
 
@@ -156,29 +157,4 @@ void AudioBuffer::reset()
 	currentBuffer = getBufferFromPool();
 	queuedBuffers.push_back(currentBuffer);
 
-}
-
-void AudioBuffer::updateFFT(int16_t *buffer, unsigned int size)
-{
-	//memcpy(fftBuffer, buffer, size);
-	short avg[512];
-	int half = size / 2;
-
-	// make mono
-	for (int i = 0, j = 0; i < half; i++, j += 2) {
-		avg[i] = (buffer[j] + buffer[j + 1]) / 2;
-	}
-
-	for (int i = 0; i < half; i++) {
-		if (i & 0x01)
-			fftBuffer[(half + i) >> 1] = avg[i];
-		else
-			fftBuffer[i >> 1] = avg[i];
-	}
-
-	// log2(512) = 9
-	int scale = fix_fftr(fftBuffer, 9, 1);
-
-	m_visualizer->update(fftBuffer, half, scale);
-	//wxLogDebug("%+.3f %+.3f %+.3f %+.3f", fftBuffer[255] / 32767.0, fftBuffer[511] / 32767.0, fftBuffer[767] / 32767.0, fftBuffer[1023] / 32767.0);
 }

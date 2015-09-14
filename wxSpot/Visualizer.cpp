@@ -33,18 +33,24 @@ void Visualizer::render(wxDC &dc)
 {
 	dc.SetBrush(*wxLIGHT_GREY_BRUSH);
 	dc.DrawRectangle(0, 0, width, height);
-	int mul = 512 / width - 2;
+
+	int bins = (512 / 2 + 1);
+	int mul = bins / width - 2;
 	if (buffer != nullptr) {
 		dc.SetPen(*wxBLACK_PEN);
+
 		for (unsigned int i = 0; i < width - 2; i++) {
 			int temp = buffer[i * mul];
 			temp = temp << scale;
-			float val = temp / 32767.0f;
-			val *= 0.1f;
-			int pos = val * (height / 2) + (height / 2);
-			dc.DrawPoint(i+1, pos);
+			/*float db = log10f(temp / 32767.0f);*/
+
+			float db = temp / 32767.0f;
+			db *= 0.1f;
+			int pos = db * (height / 2) + (height / 2);
+			dc.DrawPoint(i + 1, pos);
 		}
 	}
+
 }
 
 void Visualizer::update(short int *fftBuffer, unsigned int size, int scale)
