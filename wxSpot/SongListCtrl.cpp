@@ -35,7 +35,8 @@ wxString SongListCtrl::OnGetItemText(long item, long column) const
 
 wxListItemAttr *SongListCtrl::OnGetItemAttr(long item) const
 {
-	if (spotifyManager->isTrackAvailable(tracks->at(item)) == false) {
+	tracks->at(item);
+	if (spotifyManager->isTrackAvailable(tracks->at(item).get()) == false) {
 		return (wxListItemAttr *)&grey;
 	}
 
@@ -54,5 +55,5 @@ void SongListCtrl::setPlaylist(Playlist *playlist)
 
 Track *SongListCtrl::getTrack(long item)
 {
-	return tracks->at(item);
+	return tracks->at(item).get();
 }

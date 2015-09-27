@@ -14,30 +14,30 @@ Playlist::~Playlist()
 
 void Playlist::clearTracks()
 {
-	std::for_each(tracks.begin(), tracks.end(), std::default_delete<Track>());
+	//std::for_each(tracks.begin(), tracks.end(), std::default_delete<Track>());
 	tracks.clear();
 }
 
 void Playlist::addTrack(sp_track *track)
 {
-	tracks.push_back(new Track(track));
+	//tracks.push_back(new Track(track));
+	tracks.push_back(std::make_unique<Track>(track));
 }
 
 void Playlist::removeTrack(const int index)
 {
-	Track *track = tracks.at(index);
-	delete track;
+	//Track *track = tracks.at(index);
+	//delete track;
 	tracks.erase(tracks.begin() + index);
 }
 
-std::vector<Track*> *Playlist::getTracks()
+std::vector<std::unique_ptr<Track>> *Playlist::getTracks()
 {
 	return &tracks;
 }
 
-SpotifyPlaylist::SpotifyPlaylist(sp_playlist *playlist)
+SpotifyPlaylist::SpotifyPlaylist(sp_playlist *playlist) : m_pPlaylist(playlist)
 {
-	m_pPlaylist = playlist;
 	sp_playlist_add_ref(playlist);
 }
 
@@ -49,9 +49,7 @@ SpotifyPlaylist::~SpotifyPlaylist()
 void SpotifyPlaylist::removeTrack(const int index)
 {
 	sp_playlist_remove_tracks(m_pPlaylist, &index, 1);
-	Track *track = tracks.at(index);
-	delete track;
-	tracks.erase(tracks.begin() + index);
+	Playlist::removeTrack(index);
 }
 
 wxString SpotifyPlaylist::getTitle() const

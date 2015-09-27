@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include <libspotify/api.h>
 #include <wx/string.h>
@@ -16,16 +17,15 @@ public:
 	virtual ~Playlist();
 
 	void setTreeItemId(wxTreeItemId item) { treeItem = item; }
-	wxTreeItemId getTreeItemId() { return treeItem; }
+	wxTreeItemId getTreeItemId() const { return treeItem; }
 
 	void addTrack(sp_track *track);
 	virtual void removeTrack(const int index);
-	std::vector<Track*> *getTracks();
+	std::vector<std::unique_ptr<Track>> *getTracks();
 	void clearTracks();
 
 protected:
-	
-	std::vector<Track*> tracks;
+	std::vector<std::unique_ptr<Track>> tracks;
 private:
 	wxTreeItemId treeItem;
 

@@ -19,7 +19,6 @@ class Playlist;
 class LoginDialog;
 class ProgressIndicator;
 class Track;
-class Visualizer;
 
 class MainFrame : public wxFrame
 {
@@ -36,7 +35,14 @@ public:
 private:
 
 	enum {
-		ID_Settings = 1,
+		ID_HotKey_PlayPause = 1,
+		ID_HotKey_Prev,
+		ID_HotKey_Next
+	};
+
+	enum {
+		ID_Logout = 1,
+		ID_Settings,
 		ID_MilkDrop,
 		ID_Menu_Add_To_Playlist,
 		ID_Menu_Delete_Track,
@@ -47,6 +53,7 @@ private:
 	};
 
 	void OnExit(wxCommandEvent &event);
+	void OnLogout(wxCommandEvent &event);
 	void OnSettings(wxCommandEvent &event);
 	void OnMilkDrop(wxCommandEvent &event);
 	void OnAbout(wxCommandEvent &event);
@@ -63,14 +70,16 @@ private:
 
 	void OnTimerEvent(wxTimerEvent &event);
 
+	void OnHotKeyPlayPause(wxKeyEvent &event);
+	void OnHotKeyPrev(wxKeyEvent &event);
+	void OnHotKeyNext(wxKeyEvent &event);
+
 	void showLoginDialog();
 
 	void playPause();
 	bool next();
 	bool prev();
 	void highLightTrack(Track *track);
-
-
 
 	wxPanel *panel;
 
@@ -92,7 +101,6 @@ private:
 
 	wxCheckBox *checkBoxShuffle;
 
-	Visualizer *visualizer;
 	wxFrame *milkDropFrame;
 
 	wxTimer timerStatusUpdate;

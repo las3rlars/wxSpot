@@ -42,6 +42,7 @@ SettingsDialog::SettingsDialog(SoundManager *soundManager) : wxDialog(nullptr, w
 
 	m_deviceChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_deviceChoiceChoices, 0);
 	m_deviceChoice->SetSelection(deviceChoice);
+	
 	bSizer1->Add(m_deviceChoice, 0, wxALL | wxEXPAND, 5);
 
 	m_staticline1 = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
@@ -54,6 +55,10 @@ SettingsDialog::SettingsDialog(SoundManager *soundManager) : wxDialog(nullptr, w
 	m_okButton->Bind(wxEVT_BUTTON, [=](wxCommandEvent &event) {
 		MainFrame::config->Write("Path", m_dirPicker->GetPath());
 		MainFrame::config->Write("DeviceIndex", devices->at(m_deviceChoice->GetSelection())->getIndex());
+		if (deviceIndex != devices->at(m_deviceChoice->GetSelection())->getIndex()) {
+			soundManager->end();
+			soundManager->init(devices->at(m_deviceChoice->GetSelection())->getIndex());
+		}
 		EndModal(wxID_OK);
 	});
 	bSizer4->Add(m_okButton, 0, wxALL, 5);

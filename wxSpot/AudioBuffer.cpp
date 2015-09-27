@@ -3,8 +3,6 @@
 #include <wx/log.h>
 #include <algorithm> // std::min
 #include <cmath>
-#include "fix_fft.h"
-#include "Visualizer.h"
 
 #define SAMPLE_RATE 44100
 #define CHANNELS 2
@@ -117,15 +115,17 @@ int AudioBuffer::getStutter()
 
 unsigned int AudioBuffer::getPlayTime()
 {
-	return currentFrame / ((44100 * 2) / 1000);
+	return currentFrame / ((SAMPLE_RATE * CHANNELS) / 1000);
 }
 
 void AudioBuffer::setPlayTime(unsigned int time)
 {
-	unsigned int newPlayedFrame = ((44100 * 2) / 1000) * time;
+	unsigned int newPlayedFrame = ((SAMPLE_RATE * CHANNELS) / 1000) * time;
 	
 
 	if (newPlayedFrame < readOffset) {
+		readBufferOffset = 0;
+		writeBufferOffset = 0;
 		writeOffset = 0;
 	}
 

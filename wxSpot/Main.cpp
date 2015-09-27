@@ -1,7 +1,9 @@
-//#define _CRTDBG_MAP_ALLOC
-//#include <crtdbg.h>
+/*#define _CRTDBG_MAP_ALLOC*/
+#include <crtdbg.h>
 
 #include "Main.h"
+
+#include <memory>
 
 #include <wx/listctrl.h>
 #include <wx/treectrl.h>
@@ -13,7 +15,6 @@
 #include "SongListCtrl.h"
 
 #include "ProgressIndicator.h"
-#include "Visualizer.h"
 
 #include "SoundManager.h"
 #include "SpotifyManager.h"
@@ -25,8 +26,6 @@
 #include "glyphicons-175-pause.h"
 #include "glyphicons-171-step-backward.h"
 #include "glyphicons-179-step-forward.h"
-
-#include "fix_fft.h"
 
 IMPLEMENT_APP(Main)
 
@@ -44,10 +43,15 @@ EVT_COMMAND(wxID_ANY, SPOTIFY_SEARCH_RESULTS_EVENT, MainFrame::OnSpotifySearchRe
 EVT_COMMAND(wxID_ANY, SPOTIFY_LOGGED_IN_EVENT, MainFrame::OnSpotifyLoggedInEvent)
 
 EVT_MENU(wxID_EXIT, MainFrame::OnExit)
+EVT_MENU(ID_Logout, MainFrame::OnLogout)
 EVT_MENU(ID_Settings, MainFrame::OnSettings)
 EVT_MENU(ID_MilkDrop, MainFrame::OnMilkDrop)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_TIMER(wxID_ANY, MainFrame::OnTimerEvent)
+
+EVT_HOTKEY(ID_HotKey_PlayPause, MainFrame::OnHotKeyPlayPause)
+EVT_HOTKEY(ID_HotKey_Prev, MainFrame::OnHotKeyPrev)
+EVT_HOTKEY(ID_HotKey_Next, MainFrame::OnHotKeyNext)
 
 END_EVENT_TABLE()
 
@@ -56,6 +60,7 @@ wxConfig *MainFrame::config = new wxConfig("wxSpot");
 
 MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size)
 	: wxFrame((wxFrame *) nullptr, -1, title, pos, size),
+	loginDialog(nullptr),
 	timerStatusUpdate(this, wxID_ANY),
 	activeSongIndex(0),
 	activePlaylist(nullptr),
@@ -64,10 +69,11 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 {
 
 	wxMenu *menuFile = new wxMenu();
+	menuFile->Append(ID_Logout, "Logout");
 	menuFile->Append(wxID_EXIT);
 
 	wxMenu *visualizationsFile = new wxMenu();
-	visualizationsFile->Append(ID_MilkDrop, "&MilkDrop");
+	visualizationsFile->Append(ID_MilkDrop, "&MilkDrop..\tCtrl-M");
 
 	wxMenu *optionsFile = new wxMenu();
 	optionsFile->Append(ID_Settings, "&Settings...\tCtrl-S");
@@ -84,6 +90,9 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	SetMenuBar(menuBar);
 
 	panel = new wxPanel(this, wxID_ANY);
+	panel->Bind(wxEVT_CHAR_HOOK, [=](wxKeyEvent &event) {
+		event.Skip();
+	});
 
 	auto horzBox = new wxBoxSizer(wxHORIZONTAL);
 	auto vertBox = new wxBoxSizer(wxVERTICAL);
@@ -215,17 +224,9 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	wxImage::AddHandler(new wxPNGHandler);
 	//wxImage::AddHandler(new wxJPEGHandler);
 
-	//playImage = wxBitmap(wxImage("glyphicons-174-play.png", wxBITMAP_TYPE_PNG));
-	//playImage = wxBitmap(pixmap_play, wxBITMAP_TYPE_XPM);
 	playImage = wxBITMAP_PNG_FROM_DATA(glyphicons_174_play);
-	//pauseImage = wxBitmap(wxImage("glyphicons-175-pause.png", wxBITMAP_TYPE_PNG));
-	//pauseImage = wxBitmap(pixmap_pause, wxBITMAP_TYPE_XPM);
 	pauseImage = wxBITMAP_PNG_FROM_DATA(glyphicons_175_pause);
-	//nextImage = wxBitmap(wxImage("glyphicons-179-step-forward.png", wxBITMAP_TYPE_PNG));
-	//nextImage = wxBitmap(pixmap_next, wxBITMAP_TYPE_XPM);
 	nextImage = wxBITMAP_PNG_FROM_DATA(glyphicons_179_step_forward);
-	//prevImage = wxBitmap(wxImage("glyphicons-171-step-backward.png", wxBITMAP_TYPE_PNG));
-	//prevImage = wxBitmap(pixmap_prev, wxBITMAP_TYPE_XPM);
 	prevImage = wxBITMAP_PNG_FROM_DATA(glyphicons_171_step_backward);
 
 	buttonPlayPause = new wxBitmapButton(panel, wxID_ANY, playImage, wxDefaultPosition, wxSize(26, 26));
@@ -262,13 +263,10 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	
 	checkBoxShuffle = new wxCheckBox(panel, wxID_ANY, _("Shuffle"));
 
-	visualizer = new Visualizer(panel);
-
 	bottomHorzBox->Add(textCurrentProgressTime, 0, wxALIGN_CENTER_VERTICAL | wxALL, 2);
 	bottomHorzBox->Add(progressIndicator, 1, wxALIGN_CENTER_VERTICAL | wxALL | wxEXPAND, 2);
 	bottomHorzBox->Add(textTotalTime, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
 	bottomHorzBox->Add(checkBoxShuffle, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
-	bottomHorzBox->Add(visualizer, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
 	bottomHorzBox->Layout();
 
 
@@ -292,19 +290,25 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		soundManager->init(deviceIndex);
 	}
 	else {
-		SettingsDialog *dialogue = new SettingsDialog(soundManager);
+		auto dialog = std::make_unique<SettingsDialog>(soundManager);
 
-		if (dialogue->ShowModal() == wxID_OK) {
+		if (dialog->ShowModal() == wxID_OK) {
 			config->Read("Path", &spotifyCachePath);
 			config->Read("DeviceIndex", &deviceIndex);
 			spotifyManager->init(spotifyCachePath);
 			soundManager->init(deviceIndex);
 		}
-		delete dialogue;
-
 	}
 
-	showLoginDialog();
+#ifdef WIN32
+	RegisterHotKey(ID_HotKey_PlayPause, 0, VK_MEDIA_PLAY_PAUSE);
+	RegisterHotKey(ID_HotKey_Prev, 0, VK_MEDIA_PREV_TRACK);
+	RegisterHotKey(ID_HotKey_Next, 0, VK_MEDIA_NEXT_TRACK);
+#endif
+	// TODO - only show if we fail to login
+	if (spotifyManager->login() == false) {
+		showLoginDialog();
+	}
 }
 
 MainFrame::~MainFrame()
@@ -325,6 +329,12 @@ void MainFrame::OnExit(wxCommandEvent &event)
 	Close(true);
 }
 
+void MainFrame::OnLogout(wxCommandEvent &event)
+{
+	spotifyManager->logout();
+	wxMessageBox("You will be forced to enter your credentials next time you log in");
+}
+
 void MainFrame::OnSettings(wxCommandEvent &event)
 {
 	std::unique_ptr<SettingsDialog> dialogue = std::make_unique<SettingsDialog>(soundManager);
@@ -337,9 +347,9 @@ void MainFrame::OnMilkDrop(wxCommandEvent &event)
 {
 	if (milkDropFrame != nullptr) return;
 
-	milkDropFrame = new wxFrame(this, wxID_ANY, wxString("wxSpot - MilkDrop"), wxDefaultPosition, wxSize(512, 512));
+	milkDropFrame = new wxFrame(this, wxID_ANY, wxString("wxSpot - MilkDrop"), wxDefaultPosition, wxSize(512, 288));
 
-	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 24, 0 };
+	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 0, 0 };
 
 	milkDropFrame->Bind(wxEVT_CLOSE_WINDOW, [=](wxCloseEvent &event) {
 		soundManager->setMilkDropVisualizer(nullptr);
@@ -352,6 +362,9 @@ void MainFrame::OnMilkDrop(wxCommandEvent &event)
 	milkDropVisualizer->Bind(wxEVT_KEY_DOWN, [=](wxKeyEvent &event) {
 		if (event.GetModifiers() == wxMOD_ALT && event.GetKeyCode() == WXK_RETURN) {
 			milkDropFrame->ShowFullScreen(!milkDropFrame->IsFullScreen());
+		}
+		else if (event.GetKeyCode() == WXK_SPACE) {
+			next();
 		}
 	});
 	soundManager->setMilkDropVisualizer(milkDropVisualizer);
@@ -405,16 +418,16 @@ void MainFrame::OnSpotifyLoadedContainerEvent(wxCommandEvent &event)
 
 	wxTreeItemId shared = playlistTree->AppendItem(parent, "Shared");
 	wxTreeItemId own = playlistTree->AppendItem(parent, "Own");
-	for (unsigned int i = 0; i < playlists->size(); i++) {
+	for ( auto &playlist : *playlists) {
 		wxTreeItemId item;
-		if (playlists->at(i)->isShared()) {
-			item = playlistTree->AppendItem(shared, playlists->at(i)->getTitle());
+		if (playlist->isShared()) {
+			item = playlistTree->AppendItem(shared, playlist->getTitle());
 		}
 		else {
-			item = playlistTree->AppendItem(own, playlists->at(i)->getTitle());
+			item = playlistTree->AppendItem(own, playlist->getTitle());
 		}
 		
-		playlists->at(i)->setTreeItemId(item);
+		playlist->setTreeItemId(item);
 	}
 
 	playlistTree->ExpandAll();
@@ -481,6 +494,21 @@ void MainFrame::OnTimerEvent(wxTimerEvent &event)
 	progressIndicator->SetValue(((double)currTime / (double)duration));
 }
 
+void MainFrame::OnHotKeyPlayPause(wxKeyEvent &event)
+{
+	playPause();
+}
+
+void MainFrame::OnHotKeyPrev(wxKeyEvent &event)
+{
+	prev();
+}
+
+void MainFrame::OnHotKeyNext(wxKeyEvent &event)
+{
+	next();
+}
+
 void MainFrame::showLoginDialog()
 {
 	loginDialog = new LoginDialog();
@@ -515,16 +543,18 @@ bool MainFrame::next()
 				activeSongIndex = newIndex;
 			}
 		}
-		else if (activeSongIndex == activePlaylist->getTracks()->size() - 1) {
+		else if (activeSongIndex >= activePlaylist->getTracks()->size() - 1) {
 			timerStatusUpdate.Stop();
 			soundManager->stop();
+			activeSongIndex = activePlaylist->getTracks()->size() - 1;
 			return false;
 		}
 		else {
 			activeSongIndex++;
 		}
-		if (spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex))) {
-			highLightTrack(activePlaylist->getTracks()->at(activeSongIndex));
+		if (spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex).get())) {
+			progressIndicator->SetValue(0.0f);
+			highLightTrack(activePlaylist->getTracks()->at(activeSongIndex).get());
 		}
 		spotifyManager->processEvents();
 
@@ -537,15 +567,16 @@ bool MainFrame::prev()
 {
 	Playlist *activePlaylist = (Playlist*)songList->GetClientData();
 	if (activePlaylist != nullptr) {
-		if (0 == activeSongIndex) {
+		if (activeSongIndex == 0) {
 			timerStatusUpdate.Stop();
 			soundManager->stop();
 			return false;
 		}
 		else {
 			activeSongIndex--;
-			if (spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex))) {
-				highLightTrack(activePlaylist->getTracks()->at(activeSongIndex));
+			if (spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex).get())) {
+				progressIndicator->SetValue(0.0f);
+				highLightTrack(activePlaylist->getTracks()->at(activeSongIndex).get());
 			}
 			spotifyManager->processEvents();
 
@@ -566,7 +597,7 @@ void MainFrame::highLightTrack(Track *track)
 	Playlist *playlist = (Playlist*)songList->GetClientData();
 	auto tracks = playlist->getTracks();
 	for (unsigned int i = 0; i < tracks->size(); i++) {
-		if (track == tracks->at(i)) {
+		if (track == tracks->at(i).get()) {
 			songList->SetItemState(i, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 			break;
 		}
@@ -588,7 +619,7 @@ bool Main::OnInit()
 		return false;
 	}
 
-	//_CrtSetBreakAlloc(4223);
+	//_CrtSetBreakAlloc(57769);
 
 	mainFrame = new MainFrame(_("wxSpot"), wxDefaultPosition, wxSize(800, 600));
 

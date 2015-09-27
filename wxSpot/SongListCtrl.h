@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <wx/listctrl.h>
 
 class Playlist;
@@ -19,7 +20,7 @@ public:
 	Track *getTrack(long item);
 private:
 	SpotifyManager *spotifyManager;
-	std::vector<Track*> *tracks;
+	std::vector<std::unique_ptr<Track>> *tracks;
 
 	wxListItemAttr grey;
 };

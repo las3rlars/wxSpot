@@ -34,7 +34,7 @@ wxString Track::getLink() const
 		}
 	}
 
-	return wxString("");
+	return wxEmptyString;
 }
 
 wxString Track::getTitle() const

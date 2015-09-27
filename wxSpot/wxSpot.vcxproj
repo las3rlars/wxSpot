@@ -74,7 +74,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_HAS_EXCEPTIONS=0;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib\mswu;D:\projekt\sdk\wxWidgets-3.0.2\include;D:\projekt\SDK\libspotify-12.1.51-win32-release\include;D:\Download\Web\pa_stable_v19_20140130\portaudio\include;D:\Download\Web\projectM-complete-2.1.0-Source\projectM-complete-2.1.0-Source\src\libprojectM</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -98,7 +98,6 @@
   <ItemGroup>
     <ClInclude Include="AppKey.h" />
     <ClInclude Include="AudioBuffer.h" />
-    <ClInclude Include="fix_fft.h" />
     <ClInclude Include="LoginDialog.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="MilkDropVisualizer.h" />
@@ -109,11 +108,9 @@
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="SpotifyManager.h" />
     <ClInclude Include="Track.h" />
-    <ClInclude Include="Visualizer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AudioBuffer.cpp" />
-    <ClCompile Include="fix_fft.cpp" />
     <ClCompile Include="LoginDialog.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MilkDropVisualizer.cpp" />
@@ -124,7 +121,6 @@
     <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="SpotifyManager.cpp" />
     <ClCompile Include="Track.cpp" />
-    <ClCompile Include="Visualizer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

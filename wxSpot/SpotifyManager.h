@@ -33,7 +33,8 @@ public:
 	void init(wxString cachePath);
 	void end();
 
-	void login(const wxString username, const wxString password);
+	bool login(const wxString username = wxEmptyString, const wxString password = wxEmptyString, bool remember = true);
+	void logout();
 
 	void setEventHandler(wxEvtHandler *eventHandler);
 

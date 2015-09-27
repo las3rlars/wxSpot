@@ -48,12 +48,6 @@
     <ClInclude Include="SettingsDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fix_fft.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Visualizer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MilkDropVisualizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -87,12 +81,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SettingsDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="fix_fft.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Visualizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MilkDropVisualizer.cpp">

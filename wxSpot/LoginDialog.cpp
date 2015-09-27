@@ -59,7 +59,7 @@ void LoginDialog::setSpotifyManager(SpotifyManager *manager)
 }
 void LoginDialog::OnLoginClicked(wxCommandEvent &event)
 {
-	spotifyManager->login(mUsernameTextCtrl->GetValue(), mPasswordTextCtrl->GetValue());
+	spotifyManager->login(mUsernameTextCtrl->GetValue(), mPasswordTextCtrl->GetValue(), mAutoLoginCheckBox->GetValue());
 }
 
 void LoginDialog::OnLoggedInEvent(wxCommandEvent &event)
