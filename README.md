@@ -10,9 +10,15 @@ You will also be prompted to enter a spotify cache directory. This is where the 
 of the music you are playing. If you are using a SSD + Mechanical harddrive - this allows you to put
 the cache on your mechanical disk.
 
+If your keyboard supports media keys - play/pause, next, prev should now work globaly
+
 ### Visualizations
 
 wxSpot has projectM visualizations baked in. So you can enjoy Milkdrop just like in the good old winamp days
+
+<kbd>alt</kbd> + <kbd>enter</kbd> to go fullscreen
+<kbd>space</kbd> for next track
+
 
 ### FAQ
 
