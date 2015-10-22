@@ -79,7 +79,8 @@ private:
 	void playPause();
 	bool next();
 	bool prev();
-	void highLightTrack(Track *track);
+	void highLightTrack(const Track *track);
+	void playTrack(Track *const track);
 
 	wxPanel *panel;
 

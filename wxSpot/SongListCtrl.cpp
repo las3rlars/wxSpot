@@ -4,14 +4,27 @@
 #include "SpotifyManager.h"
 
 SongListCtrl::SongListCtrl(wxWindow *parent, SpotifyManager *spotifyManager) :
-wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_VIRTUAL),
+wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_VIRTUAL | wxLC_VRULES),
 	spotifyManager(spotifyManager)
 {
 	AppendColumn(wxString("Track"), wxLIST_FORMAT_LEFT, 280);
 	AppendColumn(wxString("Artist"), wxLIST_FORMAT_LEFT, 170);
+	AppendColumn(wxString("Duration"), wxLIST_FORMAT_RIGHT, 60);
 	AppendColumn(wxString("Album"), wxLIST_FORMAT_LEFT, 170);
 
-	grey.SetTextColour(*wxLIGHT_GREY);
+	const wxColour bgColour = GetBackgroundColour();
+
+	// Depending on the background, alternate row color
+	// will be 3% more dark or 50% brighter.
+	int alpha = bgColour.GetRGB() > 0x808080 ? 97 : 150;
+
+	const wxColor darkenedBg = bgColour.ChangeLightness(alpha);
+
+	odd_unavailable.SetTextColour(*wxLIGHT_GREY);
+	even_unavailabe.SetTextColour(*wxLIGHT_GREY);
+	even_unavailabe.SetBackgroundColour(darkenedBg);
+	even_available.SetBackgroundColour(darkenedBg);
+
 }
 
 
@@ -21,25 +34,32 @@ SongListCtrl::~SongListCtrl()
 
 wxString SongListCtrl::OnGetItemText(long item, long column) const
 {
-	switch (column) {
-	case 0:
-		return tracks->at(item)->getTitle();
-	case 1:
-		return tracks->at(item)->getArtist();
-	case 2:
-		return tracks->at(item)->getAlbum();
+	if (tracks->at(item)->isLoaded()) {
+		switch (column) {
+		case 0:
+			return tracks->at(item)->getTitle();
+		case 1:
+			return tracks->at(item)->getArtist();
+		case 2: {
+			unsigned int duration = tracks->at(item)->getDuration();
+			return wxString::Format("%d:%02d", duration / 60000, (duration / 1000) % 60);
+		}
+		case 3:
+			return tracks->at(item)->getAlbum();
+		}
 	}
 
-	return wxString("");
+	return wxString("Loading");
 }
 
 wxListItemAttr *SongListCtrl::OnGetItemAttr(long item) const
 {
-	tracks->at(item);
 	if (spotifyManager->isTrackAvailable(tracks->at(item).get()) == false) {
-		return (wxListItemAttr *)&grey;
+		if (item & 0x1) return (wxListItemAttr*)&even_unavailabe;
+		return (wxListItemAttr *)&odd_unavailable;
 	}
 
+	if (item & 0x1) return (wxListItemAttr*)&even_available;
 	return nullptr;
 }
 

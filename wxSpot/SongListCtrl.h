@@ -22,6 +22,9 @@ private:
 	SpotifyManager *spotifyManager;
 	std::vector<std::unique_ptr<Track>> *tracks;
 
-	wxListItemAttr grey;
+	wxListItemAttr even_unavailabe;
+	wxListItemAttr even_available;
+	wxListItemAttr odd_unavailable;
+	wxListItemAttr odd_available;
 };
 

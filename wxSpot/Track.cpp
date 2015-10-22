@@ -17,6 +17,11 @@ Track::~Track()
 	sp_track_release(m_pTrack);
 }
 
+bool Track::isLoaded()
+{
+	return sp_track_is_loaded(m_pTrack);
+}
+
 wxString Track::getLink() const
 {
 	char buffer[128];
@@ -55,31 +60,30 @@ wxString Track::getTitle() const
 
 wxString Track::getAlbum() const
 {
-	if (sp_track_is_loaded(m_pTrack)) {
-		sp_album *album = sp_track_album(m_pTrack);
-		if (sp_album_is_loaded(album)) {
-			return wxString::FromUTF8(sp_album_name(album));
-		}
+	sp_album *album = sp_track_album(m_pTrack);
+	if (sp_album_is_loaded(album)) {
+		return wxString::FromUTF8(sp_album_name(album));
 	}
 	return wxString("Loading");
 }
 
 wxString Track::getArtist() const
 {
-	if (sp_track_is_loaded(m_pTrack)) {
+	wxString artists = "";
+	for (int i = 0; i < sp_track_num_artists(m_pTrack); i++) {
+		sp_artist *art = sp_track_artist(m_pTrack, i);
 
-		wxString artists = "";
-		for (int i = 0; i < sp_track_num_artists(m_pTrack); i++) {
-			sp_artist *art = sp_track_artist(m_pTrack, i);
-
-			artists.append(wxString::FromUTF8(sp_artist_name(art)));
-			artists.append(", ");
-		}
-		artists.Truncate(artists.Length() - 2);
-		return artists;
+		artists.append(wxString::FromUTF8(sp_artist_name(art)));
+		artists.append(", ");
 	}
+	artists.Truncate(artists.Length() - 2);
+	return artists;
 
-	return wxString(_("Loading"));
+}
+
+unsigned int Track::getDuration() const
+{
+	return sp_track_duration(m_pTrack);
 }
 
 sp_track *Track::getSpTrack()

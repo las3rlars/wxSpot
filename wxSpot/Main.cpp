@@ -7,6 +7,7 @@
 
 #include <wx/listctrl.h>
 #include <wx/treectrl.h>
+#include <wx/splitter.h>
 #include <wx/time.h> 
 #include <wx/clipbrd.h>
 #include <wx/tokenzr.h>
@@ -90,24 +91,36 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	SetMenuBar(menuBar);
 
 	panel = new wxPanel(this, wxID_ANY);
+	// TODO not sure if this is needed anymore
 	panel->Bind(wxEVT_CHAR_HOOK, [=](wxKeyEvent &event) {
 		event.Skip();
 	});
 
-	auto horzBox = new wxBoxSizer(wxHORIZONTAL);
+	//auto horzBox = new wxBoxSizer(wxHORIZONTAL);
 	auto vertBox = new wxBoxSizer(wxVERTICAL);
 	auto bottomHorzBox = new wxBoxSizer(wxHORIZONTAL);
 
 	spotifyManager = new SpotifyManager(this);
 
-	songList = new SongListCtrl(panel, spotifyManager);
+	auto windowSplitter = new wxSplitterWindow(panel, wxID_ANY);
+	windowSplitter->SetSashGravity(0.3);
+	windowSplitter->SetMinimumPaneSize(20);
+
+	auto panel1 = new wxPanel(windowSplitter, wxID_ANY);
+	auto panel2 = new wxPanel(windowSplitter, wxID_ANY);
+
+	songList = new SongListCtrl(panel2, spotifyManager);
 	songList->SetClientData(nullptr);
 
-	playlistTree = new wxTreeCtrl(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE | wxTR_HIDE_ROOT);
+	playlistTree = new wxTreeCtrl(panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE | wxTR_HIDE_ROOT);
 	playlistTree->AddRoot("Playlists");
 
 	playlistTree->Bind(wxEVT_TREE_SEL_CHANGED, [=](wxTreeEvent &event) {
 		wxTreeItemId item = event.GetItem();
+		if (spotifyManager->getSearchResults()->getTreeItemId() == item) {
+			songList->setPlaylist(spotifyManager->getSearchResults());
+			return;
+		}
 		std::vector<SpotifyPlaylist*> *playlists = spotifyManager->getPlaylists();
 
 		for (unsigned int i = 0; i < playlists->size(); i++) {
@@ -125,11 +138,8 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 		Track *track = songList->getTrack(index);
 		activePlaylist = (Playlist *)songList->GetClientData();
-		if (spotifyManager->playTrack(track)) {
-			highLightTrack(track);
-		}
+		playTrack(track);
 		activeSongIndex = index;
-		spotifyManager->processEvents();
 	});
 
 	songList->Bind(wxEVT_LIST_ITEM_RIGHT_CLICK, [=](wxListEvent &event) {
@@ -166,7 +176,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 			break;
 		case ID_Menu_Copy_TrackName:
 			if (wxTheClipboard->Open()) {
-				wxTheClipboard->SetData(new wxTextDataObject(track->getTitle() + " - " + track->getArtist()));
+				wxTheClipboard->SetData(new wxTextDataObject(track->getArtist() + " - " + track->getTitle()));
 				wxTheClipboard->Close();
 			}
 			break;
@@ -204,7 +214,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	});
 
 
-	searchTextCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	searchTextCtrl = new wxTextCtrl(panel1, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	searchTextCtrl->Bind(wxEVT_TEXT_ENTER, [=](wxCommandEvent &event) {
 		spotifyManager->search(searchTextCtrl->GetValue());
 	});
@@ -213,13 +223,22 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	searchPlaylistBox->Add(searchTextCtrl, wxSizerFlags(0).Expand().Border(wxALL, 2));
 	searchPlaylistBox->Add(playlistTree, 1, wxGROW);
-	horzBox->Add(searchPlaylistBox, 2, wxGROW);
+	
+
+	//horzBox->Add(searchPlaylistBox, 2, wxGROW);
 
 	songList->Layout();
 
-	horzBox->Add(songList, 4, wxGROW);
 
-	vertBox->Add(horzBox, 2, wxGROW);
+	panel1->SetSizer(searchPlaylistBox);
+	auto panel2Sizer = new wxBoxSizer(wxHORIZONTAL);
+	panel2Sizer->Add(songList, 1, wxGROW);
+	panel2->SetSizer(panel2Sizer);
+	windowSplitter->SplitVertically(panel1, panel2, -750);
+
+	//horzBox->Add(songList, 4, wxGROW);
+	vertBox->Add(windowSplitter, 2, wxGROW);
+	//vertBox->Add(horzBox, 2, wxGROW);
 
 	wxImage::AddHandler(new wxPNGHandler);
 	//wxImage::AddHandler(new wxJPEGHandler);
@@ -251,9 +270,6 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	progressIndicator = new ProgressIndicator(panel);
 	progressIndicator->Bind(PI_SCROLL_CHANGED, [=](wxCommandEvent &event) {
 		spotifyManager->seek(progressIndicator->GetValue() * spotifyManager->getSongLength());
-
-		// force a process events for faster seeks :)
-		spotifyManager->processEvents();
 	});
 
 
@@ -345,6 +361,7 @@ void MainFrame::OnSettings(wxCommandEvent &event)
 
 void MainFrame::OnMilkDrop(wxCommandEvent &event)
 {
+	// Only allow one window at the time
 	if (milkDropFrame != nullptr) return;
 
 	milkDropFrame = new wxFrame(this, wxID_ANY, wxString("wxSpot - MilkDrop"), wxDefaultPosition, wxSize(512, 288));
@@ -373,7 +390,7 @@ void MainFrame::OnMilkDrop(wxCommandEvent &event)
 
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
-	wxMessageBox("wxSpot 0.9 by Viktor Müntzing\nVisualizations from projectM", "About", wxOK | wxICON_INFORMATION);
+	wxMessageBox("wxSpot 0.9.5 by Viktor Müntzing\nVisualizations from projectM", "About", wxOK | wxICON_INFORMATION);
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)
@@ -396,10 +413,9 @@ void MainFrame::OnSpotifyStartedPlayingEvent(wxCommandEvent &event)
 
 void MainFrame::OnSpotifyStoppedPlayingEvent(wxCommandEvent &event)
 {
-	buttonPlayPause->SetImageLabel(playImage);
-
-	timerStatusUpdate.Stop();
 	soundManager->stop();
+	buttonPlayPause->SetImageLabel(playImage);
+	timerStatusUpdate.Stop();
 }
 
 void MainFrame::OnSpotifyEndOfTrackEvent(wxCommandEvent &event)
@@ -415,6 +431,9 @@ void MainFrame::OnSpotifyLoadedContainerEvent(wxCommandEvent &event)
 	playlistTree->Freeze();
 	wxTreeItemId parent = playlistTree->GetRootItem();
 	playlistTree->DeleteChildren(parent);
+
+	wxTreeItemId searchResults = playlistTree->AppendItem(parent, "Search results");
+	spotifyManager->getSearchResults()->setTreeItemId(searchResults);
 
 	wxTreeItemId shared = playlistTree->AppendItem(parent, "Shared");
 	wxTreeItemId own = playlistTree->AppendItem(parent, "Own");
@@ -552,12 +571,7 @@ bool MainFrame::next()
 		else {
 			activeSongIndex++;
 		}
-		if (spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex).get())) {
-			progressIndicator->SetValue(0.0f);
-			highLightTrack(activePlaylist->getTracks()->at(activeSongIndex).get());
-		}
-		spotifyManager->processEvents();
-
+		playTrack(activePlaylist->getTracks()->at(activeSongIndex).get());
 	}
 	return true;
 
@@ -574,12 +588,7 @@ bool MainFrame::prev()
 		}
 		else {
 			activeSongIndex--;
-			if (spotifyManager->playTrack(activePlaylist->getTracks()->at(activeSongIndex).get())) {
-				progressIndicator->SetValue(0.0f);
-				highLightTrack(activePlaylist->getTracks()->at(activeSongIndex).get());
-			}
-			spotifyManager->processEvents();
-
+			playTrack(activePlaylist->getTracks()->at(activeSongIndex).get());
 		}
 	}
 
@@ -592,7 +601,7 @@ void MainFrame::bufferDone()
 	next();
 }
 
-void MainFrame::highLightTrack(Track *track)
+void MainFrame::highLightTrack(const Track *track)
 {
 	Playlist *playlist = (Playlist*)songList->GetClientData();
 	auto tracks = playlist->getTracks();
@@ -601,6 +610,15 @@ void MainFrame::highLightTrack(Track *track)
 			songList->SetItemState(i, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 			break;
 		}
+	}
+}
+
+void MainFrame::playTrack(Track *const track)
+{
+	if (spotifyManager->playTrack(track)) {
+		textCurrentProgressTime->SetLabelText("0:00");
+		progressIndicator->SetValue(0.0f);
+		highLightTrack(track);
 	}
 }
 
@@ -621,7 +639,7 @@ bool Main::OnInit()
 
 	//_CrtSetBreakAlloc(57769);
 
-	mainFrame = new MainFrame(_("wxSpot"), wxDefaultPosition, wxSize(800, 600));
+	mainFrame = new MainFrame(_("wxSpot"), wxDefaultPosition, wxSize(1024, 768));
 
 	mainFrame->Show();
 

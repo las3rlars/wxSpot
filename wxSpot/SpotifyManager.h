@@ -47,7 +47,7 @@ public:
 	int getSampleDiff();
 	int getStutter();
 
-	bool playTrack(Track *track);
+	bool playTrack(Track *const track);
 	void playPause();
 	unsigned int seek(unsigned int position);
 
@@ -59,7 +59,7 @@ public:
 	unsigned int getSongLength();
 	wxString getSongName();
 
-	bool isTrackAvailable(Track *track);
+	bool isTrackAvailable(Track *const track);
 	void addTrackToPlaylist(Track *track, SpotifyPlaylist *playlist);
 
 	bool m_isPlaying;

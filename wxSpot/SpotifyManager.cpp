@@ -518,7 +518,7 @@ int SpotifyManager::getStutter()
 
 }
 
-bool SpotifyManager::playTrack(Track *track)
+bool SpotifyManager::playTrack(Track *const track)
 {
 	if (!isTrackAvailable(track)) {
 		sendEvent(SPOTIFY_END_OF_TRACK_EVENT);
@@ -657,7 +657,7 @@ wxString SpotifyManager::getSongName()
 
 }
 
-bool SpotifyManager::isTrackAvailable(Track *track)
+bool SpotifyManager::isTrackAvailable(Track *const track)
 {
 	sp_track *spTrack = track->getSpTrack();
 
