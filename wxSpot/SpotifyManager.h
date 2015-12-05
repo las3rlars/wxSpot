@@ -62,6 +62,10 @@ public:
 	bool isTrackAvailable(Track *const track);
 	void addTrackToPlaylist(Track *track, SpotifyPlaylist *playlist);
 
+	void createPlaylist(const wxString name);
+	void deletePlaylist(SpotifyPlaylist *playlist);
+	void renamePlaylist(SpotifyPlaylist *playlist, const wxString newName);
+
 	bool m_isPlaying;
 
 	sp_session *getSession() { return m_pSession; }

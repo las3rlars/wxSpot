@@ -57,19 +57,22 @@ static void SP_CALLCONV callback_tracks_added(sp_playlist *pl, sp_track * const 
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 
+	wxLogDebug("%s Tracks added: num: %d position: %d", __FUNCTIONW__, num_tracks, position);
+
 	SpotifyPlaylist *playlist = GetPlaylistFromSpPlaylist(manager, pl);
 
 	if (playlist == nullptr) return;
 
 	for (int i = 0; i < num_tracks; i++) {
-		playlist->addTrack(tracks[i]);
+		// This causes duplicates when adding tracks to a brand new playlist
+		//playlist->addTrack(tracks[i]);
 	}
 	
 }
 
 static void SP_CALLCONV callback_tracks_removed(sp_playlist *pl, const int *tracks, int num_tracks, void *userData)
 {
-
+	wxLogDebug("callback - Tracks removed");
 }
 
 static void SP_CALLCONV callback_tracks_moved(sp_playlist *pl, const int *tracks, int num_tracks, int new_position, void *userData)
@@ -98,7 +101,7 @@ static void SP_CALLCONV callbacks_playlist_state_changed(sp_playlist *pl, void *
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 
-	wxLogDebug("Playlist state changed: %s", sp_playlist_name(pl));
+	wxLogDebug("Playlist state changed: %s : collab: %d pending changes: %d loaded: %d", sp_playlist_name(pl), sp_playlist_is_collaborative(pl), sp_playlist_has_pending_changes(pl), sp_playlist_is_loaded(pl));
 	std::vector<SpotifyPlaylist*> *playlists = manager->getPlaylists();
 
 	for (unsigned int i = 0; i < playlists->size(); i++) {
@@ -152,6 +155,7 @@ static void SP_CALLCONV callback_playlist_added(sp_playlistcontainer *pc, sp_pla
 
 static void SP_CALLCONV callback_playlist_removed(sp_playlistcontainer *pc, sp_playlist *pl, int position, void *userData)
 {
+	wxLogDebug("%s", __FUNCTIONW__);
 	sp_playlist_remove_callbacks(pl, &pl_callbacks, nullptr);
 }
 
@@ -159,6 +163,7 @@ static void SP_CALLCONV callback_container_loaded(sp_playlistcontainer *pc, void
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
 	int num = sp_playlistcontainer_num_playlists(pc);
+	bool dirty = false;
 	for (int i = 0; i < num; i++) {
 
 		
@@ -175,12 +180,14 @@ static void SP_CALLCONV callback_container_loaded(sp_playlistcontainer *pc, void
 		}
 
 		if (alreadyHave) {
-			wxLogDebug("Playlist already exists - ignoring");
+			wxLogDebug("%s Playlist already exists - ignoring", __FUNCTIONW__);
 			continue;
 
 		}
 
-		sp_playlist_add_ref(spPlaylist);
+		dirty = true;
+
+		//sp_playlist_add_ref(spPlaylist);
 
 		SpotifyPlaylist *playlist = new SpotifyPlaylist(spPlaylist);
 
@@ -191,13 +198,16 @@ static void SP_CALLCONV callback_container_loaded(sp_playlistcontainer *pc, void
 			}
 		}
 		else {
-			wxLogDebug("Playlist not loaded");
+			wxLogDebug("%s Playlist not loaded", __FUNCTIONW__);
 		}
-		wxLogDebug("Adding playlist: %s", playlist->getTitle());
+		wxLogDebug("%s Adding playlist: %s", __FUNCTIONW__, playlist->getTitle());
 		manager->addPlaylist(playlist);
 	}
 
-	manager->sendEvent(SPOTIFY_LOADED_CONTAINER_EVENT);
+	if (dirty) {
+		manager->sendEvent(SPOTIFY_LOADED_CONTAINER_EVENT);
+	}
+	
 }
 
 static sp_playlistcontainer_callbacks pc_callbacks = {
@@ -675,4 +685,34 @@ void SpotifyManager::addTrackToPlaylist(Track *track, SpotifyPlaylist *playlist)
 
 	sp_playlist_add_tracks(spPlaylist, &spTrack, 1, sp_playlist_num_tracks(spPlaylist), m_pSession);
 
+}
+
+void SpotifyManager::createPlaylist(const wxString name)
+{
+	sp_playlistcontainer *container = sp_session_playlistcontainer(m_pSession);
+	sp_playlistcontainer_add_new_playlist(container, name);
+}
+
+void SpotifyManager::deletePlaylist(SpotifyPlaylist *playlist)
+{
+	sp_playlistcontainer *container = sp_session_playlistcontainer(m_pSession);
+	int pos;
+	bool found = false;
+	for (pos = 0; pos < playlists.size(); pos++) {
+		if (playlists.at(pos) == playlist) {
+			sp_playlistcontainer_remove_playlist(container, pos);
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		playlists.erase(playlists.begin() + pos);
+		delete playlist;
+	}
+	
+}
+
+void SpotifyManager::renamePlaylist(SpotifyPlaylist *playlist, const wxString newName)
+{
+	sp_playlist_rename(playlist->getSpPlaylist(), newName);
 }

@@ -49,7 +49,12 @@ private:
 		ID_Menu_Copy_TrackName,
 		ID_Menu_Copy_URI,
 		ID_Menu_Copy_URL,
-		ID_Menu_Last_Dont_Use
+		ID_Menu_Last_Dont_Use,
+
+		ID_Playlist_Add_Playlist,
+		ID_Playlist_Rename,
+		ID_Playlist_Delete
+
 	};
 
 	void OnExit(wxCommandEvent &event);

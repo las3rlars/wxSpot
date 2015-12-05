@@ -112,7 +112,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	songList = new SongListCtrl(panel2, spotifyManager);
 	songList->SetClientData(nullptr);
 
-	playlistTree = new wxTreeCtrl(panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE | wxTR_HIDE_ROOT);
+	playlistTree = new wxTreeCtrl(panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE | wxTR_HIDE_ROOT | wxTR_EDIT_LABELS);
 	playlistTree->AddRoot("Playlists");
 
 	playlistTree->Bind(wxEVT_TREE_SEL_CHANGED, [=](wxTreeEvent &event) {
@@ -130,6 +130,77 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 			}
 		}
 
+	});
+
+	playlistTree->Bind(wxEVT_TREE_ITEM_RIGHT_CLICK, [=](wxTreeEvent &event) {
+		wxTreeItemId item = event.GetItem();
+
+		if (spotifyManager->getSearchResults()->getTreeItemId() == item) {
+			// You can't do anything with the Search Playlist
+			return;
+		}
+		else if (playlistTree->ItemHasChildren(item)) {
+			wxMenu popup(playlistTree->GetItemText(item));
+			popup.Append(ID_Playlist_Add_Playlist, "Add playlist");
+
+			int selection = playlistTree->GetPopupMenuSelectionFromUser(popup, event.GetPoint());
+
+			switch (selection) {
+			case wxID_NONE:
+				break;
+			case ID_Playlist_Add_Playlist:
+				wxTreeItemId newPlaylist = playlistTree->AppendItem(item, "New playlist");
+				playlistTree->EditLabel(newPlaylist);
+				//spotifyManager->createPlaylist("New playlist");
+				break;
+			}
+		}
+		else {
+			wxMenu popup(playlistTree->GetItemText(item));
+			popup.Append(ID_Playlist_Rename, "Rename");
+			popup.Append(ID_Playlist_Delete, "Delete");
+
+			int selection = playlistTree->GetPopupMenuSelectionFromUser(popup, event.GetPoint());
+
+			switch (selection) {
+			case wxID_NONE:
+				break;
+			case ID_Playlist_Rename:
+				playlistTree->EditLabel(item);
+				break;
+			case ID_Playlist_Delete:
+				std::unique_ptr<wxMessageDialog> dialog = std::make_unique<wxMessageDialog>(panel, wxT("Are you sure you want to delete ") + playlistTree->GetItemText(item), wxT("Delete"), wxOK | wxCANCEL | wxCANCEL_DEFAULT | wxICON_WARNING);
+
+				if (dialog->ShowModal() == wxID_OK) {
+					auto playlists = spotifyManager->getPlaylists();
+
+					for (unsigned int i = 0; i < playlists->size(); i++) {
+						if (playlists->at(i)->getTreeItemId() == item) {
+							if (activePlaylist == playlists->at(i)) {
+								activePlaylist = nullptr;
+							}
+							spotifyManager->deletePlaylist(playlists->at(i));
+							break;
+						}
+					}
+					playlistTree->Delete(item);
+				}
+			}
+		}
+	});
+
+	playlistTree->Bind(wxEVT_TREE_END_LABEL_EDIT, [=](wxTreeEvent &event) {
+		// Need to detect if we are renaming or creating a new playlist
+		wxTreeItemId item = event.GetItem();
+		auto playlists = spotifyManager->getPlaylists();
+		for (int i = 0; i < playlists->size(); i++) {
+			if (playlists->at(i)->getTreeItemId() == item) {
+				spotifyManager->renamePlaylist(playlists->at(i), event.GetLabel());
+				return;
+			}
+		}
+		
+		spotifyManager->createPlaylist(event.GetLabel());
 	});
 
 
@@ -436,6 +507,7 @@ void MainFrame::OnSpotifyLoadedContainerEvent(wxCommandEvent &event)
 	spotifyManager->getSearchResults()->setTreeItemId(searchResults);
 
 	wxTreeItemId shared = playlistTree->AppendItem(parent, "Shared");
+
 	wxTreeItemId own = playlistTree->AppendItem(parent, "Own");
 	for ( auto &playlist : *playlists) {
 		wxTreeItemId item;
@@ -475,6 +547,11 @@ void MainFrame::OnSpotifyPlaylistStateChangedEvent(wxCommandEvent &event)
 	int index = event.GetInt();
 
 	std::vector<SpotifyPlaylist*> *playlists = spotifyManager->getPlaylists();
+
+	if (index >= playlists->size()) {
+		// Old event. we don't care
+		return;
+	}
 
 	if (playlists->at(index)->isShared()) {
 		//std::cout << " is shared ";
