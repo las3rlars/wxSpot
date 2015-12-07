@@ -302,6 +302,8 @@ static void SP_CALLCONV callback_playback_stop(sp_session *sess)
 
 static void SP_CALLCONV callback_end_of_track(sp_session *sess)
 {
+	// not sure if this is needed
+	sp_session_player_unload(sess);
 	SpotifyManager *manager = GetManagerFromSession(sess);
 	manager->sendEvent(SPOTIFY_END_OF_TRACK_EVENT);
 	wxLogDebug("End of track callback");
