@@ -3,6 +3,7 @@
 #include "Main.h"
 #include "portaudio.h"
 
+wxDECLARE_EVENT(SPOTIFY_PLAY_NEXT_EVENT, wxCommandEvent);
 
 class MilkDropVisualizer;
 

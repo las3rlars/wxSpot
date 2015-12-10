@@ -8,12 +8,8 @@ END_EVENT_TABLE()
 
 wxDEFINE_EVENT(PI_SCROLL_CHANGED, wxCommandEvent);
 
-ProgressIndicator::ProgressIndicator(wxWindow *parent) : wxWindow(parent, wxID_ANY)
+ProgressIndicator::ProgressIndicator(wxWindow *parent) : wxWindow(parent, wxID_ANY), width(200), height(20), value(0)
 {
-
-	width = 200;
-	height = 20;
-	value = 0;
 	SetMinSize(wxSize(width, height));
 	SetMaxSize(wxSize(-1, height));
 }
@@ -56,6 +52,7 @@ void ProgressIndicator::render(wxDC &dc)
 void ProgressIndicator::mouseDown(wxMouseEvent &event)
 {
 	this->value = (float)event.GetPosition().x / (float)width;
+	// Repaint directly - gives a nicer feedback to the user
 	paintNow();
 
 	wxCommandEvent pressEvent = wxCommandEvent(PI_SCROLL_CHANGED);

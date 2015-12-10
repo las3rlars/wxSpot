@@ -119,7 +119,7 @@ unsigned int SoundManager::getSoundData(void *frames, int num_frames)
 
 void SoundManager::bufferDone()
 {
-	m_pMainFrame->bufferDone();
+	m_pMainFrame->sendEvent(SPOTIFY_PLAY_NEXT_EVENT);
 }
 
 void SoundManager::setMilkDropVisualizer(MilkDropVisualizer *visualizer)

@@ -43,6 +43,8 @@ EVT_COMMAND(wxID_ANY, SPOTIFY_PLAYLIST_STATE_CHANGED_EVENT, MainFrame::OnSpotify
 EVT_COMMAND(wxID_ANY, SPOTIFY_SEARCH_RESULTS_EVENT, MainFrame::OnSpotifySearchResultsEvent)
 EVT_COMMAND(wxID_ANY, SPOTIFY_LOGGED_IN_EVENT, MainFrame::OnSpotifyLoggedInEvent)
 
+EVT_COMMAND(wxID_ANY, SPOTIFY_PLAY_NEXT_EVENT, MainFrame::OnSpotifyPlayNextEvent)
+
 EVT_MENU(wxID_EXIT, MainFrame::OnExit)
 EVT_MENU(ID_Logout, MainFrame::OnLogout)
 EVT_MENU(ID_Settings, MainFrame::OnSettings)
@@ -193,7 +195,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		// Need to detect if we are renaming or creating a new playlist
 		wxTreeItemId item = event.GetItem();
 		auto playlists = spotifyManager->getPlaylists();
-		for (int i = 0; i < playlists->size(); i++) {
+		for (unsigned int i = 0; i < playlists->size(); i++) {
 			if (playlists->at(i)->getTreeItemId() == item) {
 				spotifyManager->renamePlaylist(playlists->at(i), event.GetLabel());
 				return;
@@ -461,7 +463,7 @@ void MainFrame::OnMilkDrop(wxCommandEvent &event)
 
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
-	wxMessageBox("wxSpot 0.9.5 by Viktor Müntzing\nVisualizations from projectM", "About", wxOK | wxICON_INFORMATION);
+	wxMessageBox("wxSpot 0.9.7 by Viktor Müntzing\nVisualizations from projectM", "About", wxOK | wxICON_INFORMATION);
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)
@@ -491,7 +493,7 @@ void MainFrame::OnSpotifyStoppedPlayingEvent(wxCommandEvent &event)
 
 void MainFrame::OnSpotifyEndOfTrackEvent(wxCommandEvent &event)
 {
-	wxLogDebug("End of track event");
+	//wxLogDebug("%s", __FUNCTIONW__);
 	//next();
 }
 
@@ -577,6 +579,11 @@ void MainFrame::OnSpotifyLoggedInEvent(wxCommandEvent &event)
 	if (loginDialog != nullptr) {
 		loginDialog->GetEventHandler()->QueueEvent(event.Clone());
 	}
+}
+
+void MainFrame::OnSpotifyPlayNextEvent(wxCommandEvent &event)
+{
+	next();
 }
 
 void MainFrame::OnTimerEvent(wxTimerEvent &event)
@@ -673,9 +680,12 @@ bool MainFrame::prev()
 }
 
 
-void MainFrame::bufferDone()
+void MainFrame::sendEvent(const wxEventType type, int cargo)
 {
-	next();
+	wxThreadEvent evt(type);
+	evt.SetInt(cargo);
+
+	QueueEvent(evt.Clone());
 }
 
 void MainFrame::highLightTrack(const Track *track)

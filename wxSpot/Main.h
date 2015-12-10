@@ -29,7 +29,8 @@ public:
 
 	SoundManager *getSoundManager() { return soundManager;  }
 	AudioBuffer *getAudioBuffer() { return &audioBuffer;  }
-	void bufferDone();
+
+	void sendEvent(const wxEventType type, int cargo = -1);
 
 	static wxConfig *config;
 private:
@@ -72,6 +73,7 @@ private:
 	void OnSpotifyPlaylistStateChangedEvent(wxCommandEvent &event);
 	void OnSpotifySearchResultsEvent(wxCommandEvent &event);
 	void OnSpotifyLoggedInEvent(wxCommandEvent &event);
+	void OnSpotifyPlayNextEvent(wxCommandEvent &event);
 
 	void OnTimerEvent(wxTimerEvent &event);
 

@@ -15,13 +15,13 @@ wxDECLARE_EVENT(SPOTIFY_PLAYLIST_REMOVED_EVENT, wxCommandEvent);
 wxDECLARE_EVENT(SPOTIFY_PLAYLIST_RENAMED_EVENT, wxCommandEvent);
 wxDECLARE_EVENT(SPOTIFY_PLAYLIST_STATE_CHANGED_EVENT, wxCommandEvent);
 wxDECLARE_EVENT(SPOTIFY_SEARCH_RESULTS_EVENT, wxCommandEvent);
+wxDECLARE_EVENT(SPOTIFY_PLAY_NEXT_EVENT, wxCommandEvent);
 
 class MainFrame;
 
 #include <vector>
 #include <libspotify/api.h>
 #include "Playlist.h"
-
 
 
 class SpotifyManager
@@ -46,6 +46,7 @@ public:
 	void addPlaylist(SpotifyPlaylist *playlist);
 	int getSampleDiff();
 	int getStutter();
+	void getAudioStatus(int *stutter, int *sampleDiff);
 
 	bool playTrack(Track *const track);
 	void playPause();
@@ -67,6 +68,7 @@ public:
 	void renamePlaylist(SpotifyPlaylist *playlist, const wxString newName);
 
 	bool m_isPlaying;
+	bool m_endOfTrack;
 
 	sp_session *getSession() { return m_pSession; }
 

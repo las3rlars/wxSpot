@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <forward_list>
 #include <list>
 
@@ -15,13 +16,14 @@ public:
 
 	void addData(const int16_t *data, const unsigned int samples);
 	int readData(int16_t *dest, const unsigned int samples);
-	int getSampleDiff();
-	int getStutter();
+	void getBufferStatus(int *stutter, int *sampleDiff);
 	unsigned int getPlayTime();
 	void setPlayTime(unsigned int time);
 	void reset();
 
 private:
+	std::mutex mutex;
+
 	std::shared_ptr<int16_t> getBufferFromPool();
 	unsigned short int channels;
 	unsigned int readOffset;
