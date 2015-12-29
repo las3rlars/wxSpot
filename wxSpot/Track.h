@@ -14,6 +14,8 @@ public:
 	wxString getLink() const;
 	wxString getTitle() const;
 	wxString getAlbum() const;
+	sp_link *getAlbumLink();
+	sp_link *getArtistLink();
 	wxString getArtist() const;
 	unsigned int getDuration() const;
 

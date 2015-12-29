@@ -67,6 +67,11 @@ wxString Track::getAlbum() const
 	return wxString("Loading");
 }
 
+sp_link *Track::getAlbumLink()
+{
+	return sp_link_create_from_album(sp_track_album(m_pTrack));
+}
+
 wxString Track::getArtist() const
 {
 	wxString artists = "";
@@ -78,8 +83,13 @@ wxString Track::getArtist() const
 	}
 	artists.Truncate(artists.Length() - 2);
 	return artists;
-
 }
+
+sp_link *Track::getArtistLink()
+{
+	return sp_link_create_from_artist(sp_track_artist(m_pTrack, 0));
+}
+
 
 unsigned int Track::getDuration() const
 {

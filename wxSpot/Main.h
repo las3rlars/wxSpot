@@ -6,6 +6,7 @@
 #endif
 
 #include <wx/config.h>
+#include <wx/snglinst.h>
 #include <random>
 
 #include "AudioBuffer.h"
@@ -46,6 +47,8 @@ private:
 		ID_Settings,
 		ID_MilkDrop,
 		ID_Menu_Add_To_Playlist,
+		ID_Menu_Open_Artist,
+		ID_Menu_Open_Album,
 		ID_Menu_Delete_Track,
 		ID_Menu_Copy_TrackName,
 		ID_Menu_Copy_URI,
@@ -138,8 +141,10 @@ public:
 	~Main();
 
 	virtual bool OnInit();
+	virtual int OnExit();
 
 	MainFrame *mainFrame;
+	wxSingleInstanceChecker *singleInstance;
 };
 
 

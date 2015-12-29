@@ -249,8 +249,10 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		wxMenu popup(track->getTitle());
 
 		popup.AppendSubMenu(playlists, "Add to playlist");
+		popup.Append(ID_Menu_Open_Artist, "Open artist");
+		popup.Append(ID_Menu_Open_Album, "Open album");
 		popup.Append(ID_Menu_Delete_Track, "Delete track");
-		popup.Append(ID_Menu_Copy_TrackName, "Copy Track Name");
+		popup.Append(ID_Menu_Copy_TrackName, "Copy track name");
 		popup.Append(ID_Menu_Copy_URI, "Copy Spotify URI");
 		popup.Append(ID_Menu_Copy_URL, "Copy Spotify URL");
 
@@ -259,6 +261,12 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 		switch (selection) {
 		case wxID_NONE:
+			break;
+		case ID_Menu_Open_Artist:
+			spotifyManager->search(track->getArtistLink());
+			break;
+		case ID_Menu_Open_Album:
+			spotifyManager->search(track->getAlbumLink());
 			break;
 		case ID_Menu_Delete_Track:
 			playlist->removeTrack(event.GetIndex());
@@ -774,6 +782,14 @@ bool Main::OnInit()
 		return false;
 	}
 
+	singleInstance = new wxSingleInstanceChecker();
+
+	if (singleInstance->IsAnotherRunning()) {
+		wxLogError("wxSpot already running, aborting.");
+		delete singleInstance;
+		singleInstance = nullptr;
+		return false;
+	}
 	//_CrtSetBreakAlloc(57769);
 
 	mainFrame = new MainFrame(_("wxSpot"), wxDefaultPosition, wxSize(1024, 768));
@@ -783,4 +799,10 @@ bool Main::OnInit()
 	SetTopWindow(mainFrame);
 
 	return true;
+}
+
+int Main::OnExit()
+{
+	delete singleInstance;
+	return 0;
 }

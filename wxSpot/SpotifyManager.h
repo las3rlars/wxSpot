@@ -53,6 +53,7 @@ public:
 	unsigned int seek(unsigned int position);
 
 	void search(const wxString searchstring);
+	void search(sp_link *link);
 
 	std::vector<SpotifyPlaylist*> *getPlaylists() { return &playlists; }
 	Playlist *getSearchResults() { return &searchResults; }

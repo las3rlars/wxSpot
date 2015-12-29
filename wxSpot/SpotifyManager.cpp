@@ -581,63 +581,67 @@ void SpotifyManager::search(wxString searchString)
 {
 	if (searchString.Lower().StartsWith("spotify:")) {
 		sp_link *link = sp_link_create_from_string(searchString.mb_str());
-
-		if (link == nullptr) return;
-
-		switch (sp_link_type(link)) {
-		case SP_LINKTYPE_TRACK: {
-			sp_track *track = sp_link_as_track(link);
-			sp_track_add_ref(track);
-			if (track != nullptr) {
-				searchResults.clearTracks();
-				searchResults.addTrack(track);
-				sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
-			}
-			break;
-		}
-		case SP_LINKTYPE_ALBUM:
-			sp_albumbrowse_create(m_pSession, sp_link_as_album(link), [](sp_albumbrowse *browse, void *userdata){
-				if (sp_albumbrowse_error(browse) != SP_ERROR_OK) {
-					return;
-				}
-				SpotifyManager *manager = GetManagerFromUserdata(userdata);
-				Playlist *searchResults = manager->getSearchResults();
-				searchResults->clearTracks();
-
-				for (int i = 0; i < sp_albumbrowse_num_tracks(browse); i++) {
-					searchResults->addTrack(sp_albumbrowse_track(browse, i));
-				}
-				//sp_albumbrowse_release(browse);
-				manager->sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
-			}, this);
-			break;
-		case SP_LINKTYPE_ARTIST:
-			sp_artistbrowse_create(m_pSession, sp_link_as_artist(link), SP_ARTISTBROWSE_FULL, [](sp_artistbrowse *browse, void *userdata) {
-				if (sp_artistbrowse_error(browse) != SP_ERROR_OK) {
-					return;
-				}
-				SpotifyManager *manager = GetManagerFromUserdata(userdata);
-				Playlist *searchResults = manager->getSearchResults();
-				searchResults->clearTracks();
-
-				for (int i = 0; i < sp_artistbrowse_num_tracks(browse); i++) {
-					searchResults->addTrack(sp_artistbrowse_track(browse, i));
-				}
-				//sp_artistbrowse_release(browse);
-				manager->sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
-			}, this);
-			break;
-		case SP_LINKTYPE_PLAYLIST:
-			// TODO
-			break;
-		}
-		sp_link_release(link);
-
+		search(link);
 	} else {
 		sp_search_create(m_pSession, searchString.mb_str(), 0, 100, 0, 100, 0, 100, 0, 100, SP_SEARCH_STANDARD, callback_search_complete, this);
 	}
 	
 }
+
+void SpotifyManager::search(sp_link *link)
+{
+	if (link == nullptr) return;
+
+	switch (sp_link_type(link)) {
+	case SP_LINKTYPE_TRACK: {
+		sp_track *track = sp_link_as_track(link);
+		sp_track_add_ref(track);
+		if (track != nullptr) {
+			searchResults.clearTracks();
+			searchResults.addTrack(track);
+			sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
+		}
+		break;
+	}
+	case SP_LINKTYPE_ALBUM:
+		sp_albumbrowse_create(m_pSession, sp_link_as_album(link), [](sp_albumbrowse *browse, void *userdata){
+			if (sp_albumbrowse_error(browse) != SP_ERROR_OK) {
+				return;
+			}
+			SpotifyManager *manager = GetManagerFromUserdata(userdata);
+			Playlist *searchResults = manager->getSearchResults();
+			searchResults->clearTracks();
+
+			for (int i = 0; i < sp_albumbrowse_num_tracks(browse); i++) {
+				searchResults->addTrack(sp_albumbrowse_track(browse, i));
+			}
+			//sp_albumbrowse_release(browse);
+			manager->sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
+		}, this);
+		break;
+	case SP_LINKTYPE_ARTIST:
+		sp_artistbrowse_create(m_pSession, sp_link_as_artist(link), SP_ARTISTBROWSE_FULL, [](sp_artistbrowse *browse, void *userdata) {
+			if (sp_artistbrowse_error(browse) != SP_ERROR_OK) {
+				return;
+			}
+			SpotifyManager *manager = GetManagerFromUserdata(userdata);
+			Playlist *searchResults = manager->getSearchResults();
+			searchResults->clearTracks();
+
+			for (int i = 0; i < sp_artistbrowse_num_tracks(browse); i++) {
+				searchResults->addTrack(sp_artistbrowse_track(browse, i));
+			}
+			//sp_artistbrowse_release(browse);
+			manager->sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
+		}, this);
+		break;
+	case SP_LINKTYPE_PLAYLIST:
+		// TODO
+		break;
+	}
+	sp_link_release(link);
+}
+
 
 unsigned int SpotifyManager::getSongLength()
 {
