@@ -3,7 +3,7 @@
 #include <memory>
 
 
-Playlist::Playlist()
+Playlist::Playlist() : currentTrack(-1)
 {
 }
 

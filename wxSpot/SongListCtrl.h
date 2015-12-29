@@ -14,11 +14,16 @@ public:
 	~SongListCtrl();
 
 	wxString OnGetItemText(long item, long column) const;
+	int OnGetItemImage(long item) const;
 	wxListItemAttr *OnGetItemAttr(long item) const;
 
 	void setPlaylist(Playlist *playlist);
 	Track *getTrack(long item);
+
+	void setHighLight(long item);
 private:
+	long highLighted;
+
 	SpotifyManager *spotifyManager;
 	std::vector<std::unique_ptr<Track>> *tracks;
 

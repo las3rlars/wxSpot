@@ -107,6 +107,8 @@ private:
 	wxStaticText *textCurrentProgressTime;
 	wxStaticText *textTotalTime;
 
+	wxImageList *imageList;
+
 	wxCheckBox *checkBoxShuffle;
 
 	wxFrame *milkDropFrame;
@@ -117,6 +119,7 @@ private:
 	wxBitmap pauseImage;
 	wxBitmap nextImage;
 	wxBitmap prevImage;
+	wxBitmap smallPlayImage;
 	
 	LoginDialog *loginDialog;
 

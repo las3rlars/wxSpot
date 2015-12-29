@@ -5,9 +5,9 @@
 //#include <cmath>
 
 #define SAMPLE_RATE 44100
-#define CHANNELS 2
-#define BUFFER_TIME 1
-#define BUFFER_SIZE SAMPLE_RATE * CHANNELS * BUFFER_TIME
+#define CHANNELS 2 // stereo
+#define BUFFER_TIME 1 // one second
+#define BUFFER_SIZE (SAMPLE_RATE * CHANNELS * BUFFER_TIME) / 2 // make it half a second.
 
 #define MUTEX 1
 
@@ -34,27 +34,28 @@ std::shared_ptr<int16_t> AudioBuffer::getBufferFromPool()
 	return front;
 }
 
-void AudioBuffer::addData(const int16_t *data, const unsigned int samples)
+int AudioBuffer::addData(const int16_t *data, const unsigned int samples)
 {
-#ifdef MUTEX
 	mutex.lock();
-#endif
+	// If samples is 0 - there has been a seek, Reset stuff
 	if (samples == 0) {
 		readOffset = 0;
 		writeOffset = 0;
-		stutter = 0;
 		writeBufferOffset = 0;
 		readBufferOffset = 0;
 		queuedBuffers.clear();
 		currentBuffer = getBufferFromPool();
 		queuedBuffers.push_back(currentBuffer);
-#ifdef MUTEX
 		mutex.unlock();
-#endif
-		return;
+		return 0;
 	}
 
-	unsigned int samplesLeft = samples;
+	if (queuedBuffers.size() == 3) {
+		mutex.unlock();
+		return 0;
+	}
+	int samplesLeft = samples;
+
 	while (samplesLeft > 0) {
 
 		if (writeBufferOffset == BUFFER_SIZE) {
@@ -63,44 +64,52 @@ void AudioBuffer::addData(const int16_t *data, const unsigned int samples)
 			queuedBuffers.push_back(currentBuffer);
 			writeBufferOffset = 0;
 		}
-		int dataSize = std::min(samplesLeft, (unsigned int)BUFFER_SIZE - writeBufferOffset);
+		int dataSize = std::min(samplesLeft, BUFFER_SIZE - writeBufferOffset);
 
 		memcpy(currentBuffer.get() + writeBufferOffset, data + (samples - samplesLeft), dataSize * 2);
 		samplesLeft -= dataSize;
-		writeOffset += dataSize;
 		writeBufferOffset += dataSize;
-
 	}
-#ifdef MUTEX
+	writeOffset += samples;
+
 	mutex.unlock();
-#endif
+	return samples;
 }
 
 int AudioBuffer::readData(int16_t *dest, const unsigned int samples)
 {
-	unsigned int samplesLeft = samples;
-#ifdef MUTEX
+	int totSamples = samples;
+	int samplesLeft = samples;
 	mutex.lock();
-#endif
-	if (readOffset + samples >= writeOffset) {
-		stutter++;
-		readOffset = 0;
+	// Are we trying to read more data than we have queued?
+	if (queuedBuffers.size() <= 1) {
+		memset(dest, 0, samples * sizeof(uint16_t));
+		mutex.unlock();
+		if (m_flush) {
+			m_flush = false;
+			return -1;
+		}
+		return samples;
 	}
 
 	while(samplesLeft > 0) {
 		if (readBufferOffset == BUFFER_SIZE) {
-			bufferPool.push_front(currentBuffer);
+			auto buffer = queuedBuffers.front();
+			bufferPool.push_back(buffer);
 			queuedBuffers.pop_front();
 			readBufferOffset = 0;
 		}
-		if (queuedBuffers.empty()) {
-#ifdef MUTEX
+
+		assert(!queuedBuffers.empty());
+
+		if (queuedBuffers.size() == 0) {
 			mutex.unlock();
-#endif
-			return 0;
+			return -1;
 		}
 
 		auto buffer = queuedBuffers.front();
+
+		//assert(buffer.get() != currentBuffer.get());
 
 		unsigned int dataSize = std::min(samplesLeft, BUFFER_SIZE - readBufferOffset);
 
@@ -111,24 +120,8 @@ int AudioBuffer::readData(int16_t *dest, const unsigned int samples)
 	}
 	readOffset += samples;
 	currentFrame += samples;
-#ifdef MUTEX
 	mutex.unlock();
-#endif
-	return samples;
-}
-
-void AudioBuffer::getBufferStatus(int *stutter, int *sampleDiff)
-{
-	mutex.lock();
-	*stutter = this->stutter;
-	this->stutter = 0;
-
-	int temp = writeOffset - readOffset;
-	if (temp < 0)
-		*sampleDiff = 0;
-	else
-		*sampleDiff = temp;
-	mutex.unlock();
+	return totSamples;
 }
 
 unsigned int AudioBuffer::getPlayTime()
@@ -139,9 +132,9 @@ unsigned int AudioBuffer::getPlayTime()
 void AudioBuffer::setPlayTime(unsigned int time)
 {
 	unsigned int newPlayedFrame = ((SAMPLE_RATE * CHANNELS) / 1000) * time;
-#ifdef MUTEX	
+
 	mutex.lock();
-#endif
+
 	if (newPlayedFrame < readOffset) {
 		readBufferOffset = 0;
 		writeBufferOffset = 0;
@@ -155,21 +148,19 @@ void AudioBuffer::setPlayTime(unsigned int time)
 
 
 	currentFrame = newPlayedFrame;
-#ifdef MUTEX
+
 	mutex.unlock();
-#endif
 }
 
 void AudioBuffer::reset()
 {
 	wxLogDebug("Resetting audio buffer with readOffset: %d writeOffset: %d", readOffset, writeOffset);
-#ifdef MUTEX
+
 	mutex.lock();
-#endif
 
 	readOffset = 0;
 	writeOffset = 0;
-	stutter = 0;
+	m_flush = false;
 	currentFrame = 0;
 	readBufferOffset = 0;
 	writeBufferOffset = 0;
@@ -181,8 +172,14 @@ void AudioBuffer::reset()
 	}
 	currentBuffer = getBufferFromPool();
 	queuedBuffers.push_back(currentBuffer);
-#ifdef MUTEX
-	mutex.unlock();
-#endif
 
+	mutex.unlock();
+
+}
+
+void AudioBuffer::flush()
+{
+	mutex.lock();
+	m_flush = true;
+	mutex.unlock();
 }

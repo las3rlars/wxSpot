@@ -42,7 +42,7 @@ public:
 	void sendEvent(const wxEventType type, int cargo = -1);
 	
 	
-	void addSoundData(const void *data, int num_frames);
+	int addSoundData(const void *data, int num_frames);
 	void addPlaylist(SpotifyPlaylist *playlist);
 	int getSampleDiff();
 	int getStutter();

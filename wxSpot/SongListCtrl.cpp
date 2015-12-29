@@ -4,7 +4,7 @@
 #include "SpotifyManager.h"
 
 SongListCtrl::SongListCtrl(wxWindow *parent, SpotifyManager *spotifyManager) :
-wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_VIRTUAL | wxLC_VRULES),
+wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_VIRTUAL | wxLC_VRULES),
 	spotifyManager(spotifyManager)
 {
 	AppendColumn(wxString("Track"), wxLIST_FORMAT_LEFT, 280);
@@ -24,6 +24,7 @@ wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxL
 	even_unavailabe.SetTextColour(*wxLIGHT_GREY);
 	even_unavailabe.SetBackgroundColour(darkenedBg);
 	even_available.SetBackgroundColour(darkenedBg);
+
 
 }
 
@@ -52,6 +53,15 @@ wxString SongListCtrl::OnGetItemText(long item, long column) const
 	return wxString("Loading");
 }
 
+int SongListCtrl::OnGetItemImage(long item) const
+{
+	Playlist *playlist = (Playlist*)GetClientData();
+	if (item == playlist->currentTrack) {
+		return 0;
+	}
+	return -1;
+}
+
 wxListItemAttr *SongListCtrl::OnGetItemAttr(long item) const
 {
 	if (spotifyManager->isTrackAvailable(tracks->at(item).get()) == false) {
@@ -71,6 +81,15 @@ void SongListCtrl::setPlaylist(Playlist *playlist)
 	tracks = playlist->getTracks();
 	SetItemCount(tracks->size());
 	Thaw();
+}
+
+void SongListCtrl::setHighLight(long item)
+{
+
+	long old = highLighted;
+	highLighted = item;
+	this->RefreshItem(old);
+	this->RefreshItem(highLighted);
 }
 
 Track *SongListCtrl::getTrack(long item)

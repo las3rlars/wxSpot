@@ -23,6 +23,7 @@ public:
 	virtual void removeTrack(const int index);
 	std::vector<std::unique_ptr<Track>> *getTracks();
 	void clearTracks();
+	long currentTrack;
 
 protected:
 	std::vector<std::unique_ptr<Track>> tracks;

@@ -18,10 +18,10 @@ static int paCallback(const void *input, void *output, unsigned long frameCount,
 
 	unsigned int samples = manager->getSoundData(output, frameCount * 2);
 
-	if (samples < frameCount * 2) {
-		manager->bufferDone();
+	/*if (samples < frameCount * 2) {
+		//manager->bufferDone();
 		return paComplete;
-	}
+	}*/
 	return paContinue;
 	
 }
@@ -108,6 +108,9 @@ unsigned int SoundManager::getSoundData(void *frames, int num_frames)
 
 	int len = buffer->readData((int16_t *)frames, num_frames);
 	
+	if (len == -1) {
+		bufferDone();
+	}
 	
 	//return buffer->readData((int16_t *)frames, num_frames);
 	if (m_milkDropVisualizer != nullptr)

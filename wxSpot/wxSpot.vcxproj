@@ -99,6 +99,7 @@
   <ItemGroup>
     <ClInclude Include="AppKey.h" />
     <ClInclude Include="AudioBuffer.h" />
+    <ClInclude Include="DnDTrackDataObject.h" />
     <ClInclude Include="LoginDialog.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="MilkDropVisualizer.h" />
@@ -112,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AudioBuffer.cpp" />
+    <ClCompile Include="DnDTrackDataObject.cpp" />
     <ClCompile Include="LoginDialog.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MilkDropVisualizer.cpp" />

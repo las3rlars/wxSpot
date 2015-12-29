@@ -14,12 +14,12 @@ public:
 	AudioBuffer();
 	~AudioBuffer();
 
-	void addData(const int16_t *data, const unsigned int samples);
+	int addData(const int16_t *data, const unsigned int samples);
 	int readData(int16_t *dest, const unsigned int samples);
-	void getBufferStatus(int *stutter, int *sampleDiff);
 	unsigned int getPlayTime();
 	void setPlayTime(unsigned int time);
 	void reset();
+	void flush();
 
 private:
 	std::mutex mutex;
@@ -29,13 +29,13 @@ private:
 	unsigned int readOffset;
 	unsigned int writeOffset;
 	unsigned int currentFrame;
-	unsigned short int stutter;
+	bool m_flush;
 
-	unsigned int readBufferOffset;
-	unsigned int writeBufferOffset;
+	int readBufferOffset;
+	int writeBufferOffset;
 
 	std::shared_ptr<int16_t> currentBuffer;
-	std::forward_list<std::shared_ptr<int16_t>> bufferPool;
+	std::list<std::shared_ptr<int16_t>> bufferPool;
 	std::list<std::shared_ptr<int16_t>> queuedBuffers;
 };
 

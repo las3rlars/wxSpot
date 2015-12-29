@@ -268,14 +268,14 @@ static void SP_CALLCONV callback_metadata_updated(sp_session *sess)
 
 static int SP_CALLCONV callback_music_delivery(sp_session *sess, const sp_audioformat *format, const void *frames, int num_frames)
 {
-	//wxLogDebug("callback - Music delivery");
 	SpotifyManager *manager = GetManagerFromSession(sess);
 
 	if (frames != nullptr) {
-		manager->addSoundData(frames, num_frames);
+		return manager->addSoundData(frames, num_frames * 2);
 	}
 
-	return num_frames;
+	return 0;
+
 }
 
 static void SP_CALLCONV callback_play_token_lost(sp_session *sess)
@@ -334,7 +334,8 @@ static sp_session_callbacks session_callbacks = {
 	NULL,
 	&callback_playback_start,
 	&callback_playback_stop,
-	&callback_get_audio_buffer_stats
+	//&callback_get_audio_buffer_stats
+	NULL
 };
 
 static void SP_CALLCONV callback_search_complete(sp_search *search, void *userData)
@@ -497,24 +498,19 @@ void SpotifyManager::sendEvent(const wxEventType type, int cargo)
 	m_eventHandler->QueueEvent(evt.Clone());
 }
 
-void SpotifyManager::addSoundData(const void *frames, int num_frames)
+int SpotifyManager::addSoundData(const void *frames, int num_frames)
 {
 	AudioBuffer *buffer = m_pMainFrame->getAudioBuffer();
-	
+
 	if (m_endOfTrack == false) {
-		buffer->addData((short *)frames, num_frames * 2);
+		return buffer->addData((short *)frames, num_frames);
 	}
 	else {
-		//m_pMainFrame->bufferDone();
-		// Queue next track event
-		sendEvent(SPOTIFY_PLAY_NEXT_EVENT);
+		//sendEvent(SPOTIFY_PLAY_NEXT_EVENT);
 	}
-	/*if (buffer->getPlayTime() >= getSongLength()) {
-		m_pMainFrame->bufferDone();
-	}
-	else {
-		buffer->addData((short *)frames, num_frames * 2);
-	}*/
+
+
+	return 0;
 }
 
 
@@ -528,7 +524,7 @@ void SpotifyManager::getAudioStatus(int *stutter, int *sampleDiff)
 {
 	//wxLogDebug("%s", __FUNCTIONW__);
 	AudioBuffer *buffer = m_pMainFrame->getAudioBuffer();
-	buffer->getBufferStatus(stutter, sampleDiff);
+	//buffer->getBufferStatus(stutter, sampleDiff);
 }
 
 bool SpotifyManager::playTrack(Track *const track)
@@ -645,7 +641,7 @@ void SpotifyManager::search(wxString searchString)
 
 unsigned int SpotifyManager::getSongLength()
 {
-	wxLogDebug("%s", __FUNCTIONW__);
+	//wxLogDebug("%s", __FUNCTIONW__);
 	if (g_track == nullptr) {
 		return 0;
 	}
@@ -679,7 +675,7 @@ wxString SpotifyManager::getSongName()
 
 bool SpotifyManager::isTrackAvailable(Track *const track)
 {
-	wxLogDebug("%s", __FUNCTIONW__);
+	//wxLogDebug("%s", __FUNCTIONW__);
 	sp_track *spTrack = track->getSpTrack();
 
 	if (sp_track_is_loaded(spTrack)) {
