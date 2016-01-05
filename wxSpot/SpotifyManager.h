@@ -63,6 +63,7 @@ public:
 
 	bool isTrackAvailable(Track *const track);
 	void addTrackToPlaylist(Track *track, SpotifyPlaylist *playlist);
+	void addTrackToPlaylist(sp_track *track, SpotifyPlaylist *playlist);
 
 	void createPlaylist(const wxString name);
 	void deletePlaylist(SpotifyPlaylist *playlist);

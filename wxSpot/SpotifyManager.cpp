@@ -693,9 +693,14 @@ bool SpotifyManager::isTrackAvailable(Track *const track)
 void SpotifyManager::addTrackToPlaylist(Track *track, SpotifyPlaylist *playlist)
 {
 	sp_track *spTrack = track->getSpTrack();
+	addTrackToPlaylist(track, playlist);
+}
+
+void SpotifyManager::addTrackToPlaylist(sp_track *track, SpotifyPlaylist *playlist)
+{
 	sp_playlist *spPlaylist = playlist->getSpPlaylist();
 
-	sp_playlist_add_tracks(spPlaylist, &spTrack, 1, sp_playlist_num_tracks(spPlaylist), m_pSession);
+	sp_playlist_add_tracks(spPlaylist, &track, 1, sp_playlist_num_tracks(spPlaylist), m_pSession);
 
 }
 

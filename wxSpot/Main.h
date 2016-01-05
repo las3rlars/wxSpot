@@ -10,6 +10,7 @@
 #include <random>
 
 #include "AudioBuffer.h"
+#include "DnDTrackDataObject.h"
 
 class SpotifyManager;
 class SoundManager;
@@ -128,6 +129,9 @@ private:
 
 	Playlist *activePlaylist;
 	unsigned int activeSongIndex;
+
+	DnDTrackDataObject dnDDataObject;
+
 
 	std::default_random_engine generator;
 

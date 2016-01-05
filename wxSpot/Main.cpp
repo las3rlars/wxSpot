@@ -15,7 +15,8 @@
 #include <wx/dnd.h>
 
 #include "SongListCtrl.h"
-
+#include "DnDTrackDataObject.h"
+#include "DnDTrackDropTarget.h"
 #include "ProgressIndicator.h"
 
 #include "SoundManager.h"
@@ -217,11 +218,30 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		spotifyManager->createPlaylist(event.GetLabel());
 	});
 
+	playlistTree->SetDropTarget(new DnDTrackDropTarget(playlistTree, spotifyManager));
+
 	songList->Bind(wxEVT_LIST_BEGIN_DRAG, [=](wxListEvent &event) {
-		wxDropSource dragSource(this);
 		
-		dragSource.DoDragDrop();
+
+		DnDTrackDataObject::Data data;
+
+		data.tracks = new sp_track*[songList->GetSelectedItemCount()];
+
+		int index = 0;
+		long current = -1;
+		while ((current = songList->GetNextItem(current, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED)) != -1) {
+			data.tracks[index++] = songList->getTrack(current)->getSpTrack();
+		}
+
+		data.len = index;
+
+		dnDDataObject.SetData(sizeof(DnDTrackDataObject::Data), &data);
+		wxDropSource dropSource(dnDDataObject, playlistTree);
+		dropSource.DoDragDrop(wxDrag_CopyOnly);
+		delete[] data.tracks;
 	});
+
+
 
 	songList->Bind(wxEVT_LIST_ITEM_ACTIVATED, [=](wxListEvent &event) {
 		int index = event.GetIndex();
@@ -501,7 +521,7 @@ void MainFrame::OnMilkDrop(wxCommandEvent &event)
 
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
-	wxMessageBox("wxSpot 0.9.7 by Viktor Müntzing\nVisualizations from projectM", "About", wxOK | wxICON_INFORMATION);
+	wxMessageBox("wxSpot 0.9.9 by Viktor Müntzing\nVisualizations from projectM", "About", wxOK | wxICON_INFORMATION);
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)
