@@ -1,7 +1,7 @@
 # wxSpot
 wxSpot - a native ui frontend for Spotify
 
-![alt tag](http://vps188527.ovh.net/~viktor/wxSpot/wxSpot%20screenshot%202.png)
+![alt tag](http://vps188527.ovh.net/~viktor/wxSpot/screenshot02.png)
 
 ## Running
 
