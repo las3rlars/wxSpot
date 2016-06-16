@@ -2,6 +2,7 @@
 
 #include "Playlist.h"
 #include "SpotifyManager.h"
+#include <wx/log.h>
 
 SongListCtrl::SongListCtrl(wxWindow *parent, SpotifyManager *spotifyManager) :
 wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_VIRTUAL | wxLC_VRULES),
@@ -25,6 +26,24 @@ wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxL
 	even_unavailabe.SetBackgroundColour(darkenedBg);
 	even_available.SetBackgroundColour(darkenedBg);
 
+	this->Bind(wxEVT_LIST_COL_END_DRAG, [=](wxListEvent &event) {
+		int width, height;
+		GetSize(&width, &height);
+		int col = event.GetColumn();
+		wxLogDebug("Changed col %d to %d - tot width: %d", col, GetColumnWidth(col), width);
+	});
+
+	this->Bind(wxEVT_SIZE, [=](wxSizeEvent &event) {
+		int width = event.GetSize().GetX();
+		//wxLogDebug("Resizeing! %d", width);
+
+		SetColumnWidth(0, (int)(0.4f * width));
+		SetColumnWidth(1, (int)(0.25f * width));
+		SetColumnWidth(2, (int)(0.1f * width));
+		int diff = GetColumnWidth(0) + GetColumnWidth(1) + GetColumnWidth(2);
+		SetColumnWidth(3, width - diff);
+		event.Skip();
+	});
 
 }
 

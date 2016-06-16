@@ -1,9 +1,12 @@
 #include "SoundManager.h"
 
 #include "AudioBuffer.h"
-#include "MilkDropVisualizer.h"
+#include "Plugin.h"
+#include "MainFrame.h"
 
 #define SAMPLE_RATE (44100)
+
+wxDECLARE_EVENT(SPOTIFY_PLAY_NEXT_EVENT, wxCommandEvent);
 
 
 static SoundManager *GetManagerFromUserdata(void *userData)
@@ -26,7 +29,7 @@ static int paCallback(const void *input, void *output, unsigned long frameCount,
 	
 }
 
-SoundManager::SoundManager(MainFrame *mainFrame) : m_milkDropVisualizer(nullptr)
+SoundManager::SoundManager(MainFrame *mainFrame) : plugin(nullptr)
 {
 	m_pMainFrame = mainFrame;
 	PaError error = Pa_Initialize();
@@ -113,8 +116,8 @@ unsigned int SoundManager::getSoundData(void *frames, int num_frames)
 	}
 	
 	//return buffer->readData((int16_t *)frames, num_frames);
-	if (m_milkDropVisualizer != nullptr)
-		m_milkDropVisualizer->updatePCM((int16_t *)frames);
+	if (plugin != nullptr)
+		plugin->updatePCM((int16_t *)frames);
 
 	return len;
 
@@ -125,9 +128,9 @@ void SoundManager::bufferDone()
 	m_pMainFrame->sendEvent(SPOTIFY_PLAY_NEXT_EVENT);
 }
 
-void SoundManager::setMilkDropVisualizer(MilkDropVisualizer *visualizer)
+void SoundManager::setPCMPlugin(Plugin *plugin)
 {
-	m_milkDropVisualizer = visualizer;
+	this->plugin = plugin;
 }
 
 std::vector<std::shared_ptr<Device>> *SoundManager::getDevices()

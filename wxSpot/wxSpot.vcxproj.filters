@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Main.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SpotifyManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -48,20 +45,23 @@
     <ClInclude Include="SettingsDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MilkDropVisualizer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DnDTrackDataObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DnDTrackDropTarget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Plugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SpotifyManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -89,13 +89,16 @@
     <ClCompile Include="SettingsDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MilkDropVisualizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DnDTrackDataObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DnDTrackDropTarget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

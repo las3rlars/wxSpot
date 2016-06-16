@@ -50,10 +50,10 @@ wxString Track::getTitle() const
 		return wxString::FromUTF8(sp_track_name(m_pTrack));
 	}
 	else if (error == SP_ERROR_IS_LOADING) {
-		return wxString(_("Loading"));
+		return wxString("Loading");
 	}
 
-	return wxString(_("Error"));
+	return wxString("Error");
 
 	
 }

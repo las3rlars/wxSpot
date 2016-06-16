@@ -19,14 +19,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -45,8 +45,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>
-      </SDLCheck>
+      <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib\mswud;D:\projekt\sdk\wxWidgets-3.0.2\include;D:\projekt\SDK\libspotify-12.1.51-win32-release\include;D:\Download\Web\pa_stable_v19_20140130\portaudio\include;D:\Download\Web\projectM-complete-2.1.0-Source\projectM-complete-2.1.0-Source\src\libprojectM</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -57,14 +56,17 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <MinimalRebuild>true</MinimalRebuild>
       <EnablePREfast>false</EnablePREfast>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\Download\Web\pa_stable_v19_20140130\portaudio\build\msvc\Win32\Debug;D:\projekt\SDK\libspotify-12.1.51-win32-release\lib;D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib;D:\Download\Web\projectM-complete-2.1.0-Source\projectM-complete-2.1.0-Source\out\src\libprojectM\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>portaudio_x86.lib;libspotify.lib;wxmsw30ud_core.lib;wxbase30ud.lib;wxmsw30ud_gl.lib;wxpngd.lib;wxzlibd.lib;wxregexud.lib;wxexpatd.lib;projectM.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;wsock32.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Download\Web\pa_stable_v19_20140130\portaudio\build\msvc\Win32\Debug;D:\projekt\SDK\libspotify-12.1.51-win32-release\lib;D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>portaudio_x86.lib;libspotify.lib;wxmsw30ud_core.lib;wxbase30ud.lib;wxmsw30ud_gl.lib;wxpngd.lib;wxzlibd.lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>
       </GenerateMapFile>
       <AssemblyDebug>true</AssemblyDebug>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -72,19 +74,18 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>false</FunctionLevelLinking>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
-      <SDLCheck>
-      </SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_HAS_EXCEPTIONS=0;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib\mswu;D:\projekt\sdk\wxWidgets-3.0.2\include;D:\projekt\SDK\libspotify-12.1.51-win32-release\include;D:\Download\Web\pa_stable_v19_20140130\portaudio\include;D:\Download\Web\projectM-complete-2.1.0-Source\projectM-complete-2.1.0-Source\src\libprojectM</AdditionalIncludeDirectories>
-      <ExceptionHandling>false</ExceptionHandling>
+      <ExceptionHandling>Sync</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -92,8 +93,8 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>D:\Download\Web\pa_stable_v19_20140130\portaudio\build\msvc\Win32\Release;D:\projekt\SDK\libspotify-12.1.51-win32-release\lib;D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib;D:\Download\Web\projectM-complete-2.1.0-Source\projectM-complete-2.1.0-Source\out\src\libprojectM\Release</AdditionalLibraryDirectories>
-      <AdditionalDependencies>portaudio_x86.lib;libspotify.lib;wxmsw30u_core.lib;wxbase30u.lib;wxmsw30u_gl.lib;wxpng.lib;wxzlib.lib;projectM.lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Download\Web\pa_stable_v19_20140130\portaudio\build\msvc\Win32\Release;D:\projekt\SDK\libspotify-12.1.51-win32-release\lib;D:\projekt\sdk\wxWidgets-3.0.2\lib\vc_lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>portaudio_x86.lib;libspotify.lib;wxmsw30u_core.lib;wxbase30u.lib;wxmsw30u_gl.lib;wxpng.lib;wxzlib.lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -103,8 +104,9 @@
     <ClInclude Include="DnDTrackDropTarget.h" />
     <ClInclude Include="LoginDialog.h" />
     <ClInclude Include="Main.h" />
-    <ClInclude Include="MilkDropVisualizer.h" />
+    <ClInclude Include="MainFrame.h" />
     <ClInclude Include="Playlist.h" />
+    <ClInclude Include="Plugin.h" />
     <ClInclude Include="ProgressIndicator.h" />
     <ClInclude Include="SettingsDialog.h" />
     <ClInclude Include="SongListCtrl.h" />
@@ -118,7 +120,7 @@
     <ClCompile Include="DnDTrackDropTarget.cpp" />
     <ClCompile Include="LoginDialog.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MilkDropVisualizer.cpp" />
+    <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="Playlist.cpp" />
     <ClCompile Include="ProgressIndicator.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />

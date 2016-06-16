@@ -2,7 +2,7 @@
 
 #include <wx/statline.h>
 #include <wx/filepicker.h>
-#include "Main.h"
+#include "MainFrame.h"
 #include "SoundManager.h"
 #include <wx/config.h>
 

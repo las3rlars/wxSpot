@@ -1,7 +1,7 @@
 #include "SpotifyManager.h"
 #include "AppKey.h"
 
-#include "Main.h"
+#include "MainFrame.h"
 #include "AudioBuffer.h"
 //#include "Log.h"
 #include <wx/log.h>
@@ -19,7 +19,7 @@ wxDEFINE_EVENT(SPOTIFY_PLAYLIST_RENAMED_EVENT, wxCommandEvent);
 wxDEFINE_EVENT(SPOTIFY_PLAYLIST_STATE_CHANGED_EVENT, wxCommandEvent);
 wxDEFINE_EVENT(SPOTIFY_SEARCH_RESULTS_EVENT, wxCommandEvent);
 wxDEFINE_EVENT(SPOTIFY_PLAY_NEXT_EVENT, wxCommandEvent);
-
+wxDEFINE_EVENT(SPOTIFY_META_UPDATED_EVENT, wxCommandEvent);
 
 
 const size_t g_appkey_size = sizeof(g_appkey);
@@ -125,7 +125,11 @@ static void SP_CALLCONV callbacks_playlist_metadata_updated(sp_playlist *pl, voi
 	for (unsigned int i = 0; i < playlists->size(); i++) {
 		if (playlists->at(i)->getSpPlaylist() == pl) {
 			//manager->sendEvent(SPOTIFY_PLAYLIST_STATE_CHANGED_EVENT, i);
-			wxLogDebug("Playlist metadata updated: %d", i);
+			playlists->at(i)->clearTracks();
+			int num = sp_playlist_num_tracks(pl);
+			for (int j = 0; j < num; j++) {
+				playlists->at(i)->addTrack(sp_playlist_track(pl, j));
+			}
 
 			return;
 		}
@@ -264,6 +268,14 @@ static void SP_CALLCONV callback_metadata_updated(sp_session *sess)
 {
 	//tryToPlay(sess);
 	wxLogDebug("Meta updated");
+	SpotifyManager *manager = GetManagerFromSession(sess);
+	sp_playlistcontainer *container = sp_session_playlistcontainer(sess);
+	if (sp_playlistcontainer_is_loaded(container)) {
+		manager->sendEvent(SPOTIFY_META_UPDATED_EVENT);
+	}
+
+	//sp_playlistcontainer_release(container);
+
 }
 
 static int SP_CALLCONV callback_music_delivery(sp_session *sess, const sp_audioformat *format, const void *frames, int num_frames)
@@ -310,15 +322,6 @@ static void SP_CALLCONV callback_end_of_track(sp_session *sess)
 	manager->m_endOfTrack = true;
 }
 
-static void SP_CALLCONV callback_get_audio_buffer_stats(sp_session *sess, sp_audio_buffer_stats *stats)
-{
-	SpotifyManager *manager = GetManagerFromSession(sess);
-
-	manager->getAudioStatus(&stats->stutter, &stats->samples);
-	/*stats->samples = manager->getSampleDiff();
-	stats->stutter = manager->getStutter();*/
-}
-
 static sp_session_callbacks session_callbacks = {
 	&callback_logged_in,
 	&callback_logged_out,
@@ -341,16 +344,18 @@ static sp_session_callbacks session_callbacks = {
 static void SP_CALLCONV callback_search_complete(sp_search *search, void *userData)
 {
 	SpotifyManager *manager = GetManagerFromUserdata(userData);
-	if (sp_search_error(search) == SP_ERROR_OK) {
+	sp_error error = sp_search_error(search);
+	if (error == SP_ERROR_OK) {
 		Playlist *searchResults = manager->getSearchResults();
 		searchResults->clearTracks();
 		for (int i = 0; i < sp_search_num_tracks(search); i++) {
 			searchResults->addTrack(sp_search_track(search, i));
 		}
-
+		manager->sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
+	} else {
+		wxLogError("Search failed: %s", sp_error_message(error));
 	}
 
-	manager->sendEvent(SPOTIFY_SEARCH_RESULTS_EVENT);
 
 	//sp_search_release(search);
 }
@@ -426,7 +431,7 @@ void SpotifyManager::init(wxString cachePath)
 	error = sp_session_preferred_bitrate(m_pSession, SP_BITRATE_320k);
 
 	if (error != SP_ERROR_OK) {
-		std::cerr << "failed setting high quality streaming" << sp_error_message(error) << std::endl;
+		wxLogDebug("Failed setting high quality streaming: %s", sp_error_message(error));
 	}
 
 	sp_session_set_volume_normalization(m_pSession, false);
@@ -583,7 +588,7 @@ void SpotifyManager::search(wxString searchString)
 		sp_link *link = sp_link_create_from_string(searchString.mb_str());
 		search(link);
 	} else {
-		sp_search_create(m_pSession, searchString.mb_str(), 0, 100, 0, 100, 0, 100, 0, 100, SP_SEARCH_STANDARD, callback_search_complete, this);
+		sp_search_create(m_pSession, searchString.ToUTF8(), 0, 100, 0, 100, 0, 100, 0, 100, SP_SEARCH_STANDARD, callback_search_complete, this);
 	}
 	
 }
@@ -693,7 +698,7 @@ bool SpotifyManager::isTrackAvailable(Track *const track)
 void SpotifyManager::addTrackToPlaylist(Track *track, SpotifyPlaylist *playlist)
 {
 	sp_track *spTrack = track->getSpTrack();
-	addTrackToPlaylist(track, playlist);
+	addTrackToPlaylist(spTrack, playlist);
 }
 
 void SpotifyManager::addTrackToPlaylist(sp_track *track, SpotifyPlaylist *playlist)

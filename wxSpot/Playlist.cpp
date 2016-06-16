@@ -57,7 +57,7 @@ wxString SpotifyPlaylist::getTitle() const
 	if (sp_playlist_is_loaded(m_pPlaylist)) {
 		return wxString::FromUTF8(sp_playlist_name(m_pPlaylist));
 	}
-	return wxString(_("Loading"));
+	return wxString("Loading");
 }
 
 bool SpotifyPlaylist::isShared()
