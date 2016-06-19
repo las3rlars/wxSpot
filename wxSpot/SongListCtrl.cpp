@@ -109,9 +109,15 @@ void SongListCtrl::setHighLight(long item)
 	highLighted = item;
 	this->RefreshItem(old);
 	this->RefreshItem(highLighted);
+	//EnsureVisible(item);
 }
 
 Track *SongListCtrl::getTrack(long item)
 {
 	return tracks->at(item).get();
+}
+
+void SongListCtrl::showCurrentTrack()
+{
+	EnsureVisible(highLighted);
 }

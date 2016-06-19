@@ -40,7 +40,8 @@ private:
 	enum {
 		ID_HotKey_PlayPause = 1,
 		ID_HotKey_Prev,
-		ID_HotKey_Next
+		ID_HotKey_Next,
+		ID_HotKey_ShowCurrentTrack
 	};
 
 	enum {
@@ -94,6 +95,7 @@ private:
 	void OnHotKeyPlayPause(wxKeyEvent &event);
 	void OnHotKeyPrev(wxKeyEvent &event);
 	void OnHotKeyNext(wxKeyEvent &event);
+	void OnHotKeyShowCurrentTrack(wxKeyEvent &event);
 
 	void showLoginDialog();
 
@@ -106,8 +108,6 @@ private:
 	void resetPlaylistTree();
 	void updatePlaylistTree();
 
-	wxTreeItemId findItem(wxTreeItemId root, const wxString &searchFor);
-
 	wxPanel *panel;
 
 	SpotifyManager *spotifyManager;
@@ -117,6 +117,8 @@ private:
 	wxTextCtrl *searchTextCtrl;
 	wxTreeCtrl *playlistTree;
 	SongListCtrl *songList;
+	wxTreeItemId own;
+	wxTreeItemId shared;
 
 	wxButton *buttonPlayPause;
 	wxButton *buttonNext;

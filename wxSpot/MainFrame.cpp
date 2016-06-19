@@ -60,6 +60,7 @@ EVT_TIMER(wxID_ANY, MainFrame::OnTimerEvent)
 EVT_HOTKEY(ID_HotKey_PlayPause, MainFrame::OnHotKeyPlayPause)
 EVT_HOTKEY(ID_HotKey_Prev, MainFrame::OnHotKeyPrev)
 EVT_HOTKEY(ID_HotKey_Next, MainFrame::OnHotKeyNext)
+EVT_HOTKEY(ID_HotKey_ShowCurrentTrack, MainFrame::OnHotKeyShowCurrentTrack)
 
 END_EVENT_TABLE()
 
@@ -272,7 +273,17 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		int index = event.GetIndex();
 
 		Track *track = songList->getTrack(index);
+		
+		/*playlistTree->SetItemImage(activePlaylist->getTreeItemId(), 0);
+		playlistTree->SetItemImage(activePlaylist->getTreeItemId(), 0, wxTreeItemIcon_Selected);*/
+		if (activePlaylist != nullptr) {
+			playlistTree->SetItemBold(activePlaylist->getTreeItemId(), false);
+		}
+
 		activePlaylist = (Playlist *)songList->GetClientData();
+		/*playlistTree->SetItemImage(activePlaylist->getTreeItemId(), 1);
+		playlistTree->SetItemImage(activePlaylist->getTreeItemId(), 1, wxTreeItemIcon_Selected);*/
+		playlistTree->SetItemBold(activePlaylist->getTreeItemId(), true);
 		playTrack(track);
 		activeSongIndex = index;
 	});
@@ -476,6 +487,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	RegisterHotKey(ID_HotKey_PlayPause, 0, VK_MEDIA_PLAY_PAUSE);
 	RegisterHotKey(ID_HotKey_Prev, 0, VK_MEDIA_PREV_TRACK);
 	RegisterHotKey(ID_HotKey_Next, 0, VK_MEDIA_NEXT_TRACK);
+	RegisterHotKey(ID_HotKey_ShowCurrentTrack, 0, 0x48);
 #endif
 	// TODO - only show if we fail to login
 	if (spotifyManager->login() == false) {
@@ -552,7 +564,7 @@ void MainFrame::OnSettings(wxCommandEvent &event)
 
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
-	wxMessageBox("wxSpot 1.0.1 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
+	wxMessageBox("wxSpot 1.0.2 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)
@@ -698,6 +710,11 @@ void MainFrame::OnHotKeyNext(wxKeyEvent &event)
 	next();
 }
 
+void MainFrame::OnHotKeyShowCurrentTrack(wxKeyEvent &event)
+{
+	songList->showCurrentTrack();
+}
+
 void MainFrame::showLoginDialog()
 {
 	loginDialog = new LoginDialog();
@@ -825,9 +842,9 @@ void MainFrame::resetPlaylistTree()
 	wxTreeItemId searchResults = playlistTree->AppendItem(parent, "Search results");
 	spotifyManager->getSearchResults()->setTreeItemId(searchResults);
 
-	wxTreeItemId shared = playlistTree->AppendItem(parent, "Shared");
+	shared = playlistTree->AppendItem(parent, "Shared");
 
-	wxTreeItemId own = playlistTree->AppendItem(parent, "Own");
+	own = playlistTree->AppendItem(parent, "Own");
 
 	for (auto &playlist : *playlists) {
 		wxTreeItemId item;
@@ -848,20 +865,43 @@ void MainFrame::resetPlaylistTree()
 void MainFrame::updatePlaylistTree()
 {
 	std::vector<SpotifyPlaylist*> *playlists = spotifyManager->getPlaylists();
-	wxTreeItemId root = playlistTree->GetRootItem();
-
-	wxTreeItemId own = findItem(root, "Own");
-	wxTreeItemId shared = findItem(root, "Shared");
 
 	if (!own.IsOk() || !shared.IsOk())
 		return;
 
 	playlistTree->Freeze();
-	playlistTree->DeleteChildren(own);
-	playlistTree->DeleteChildren(shared);
 
+	wxTreeItemIdValue sharedCookie, ownCookie;
+	wxTreeItemId sharedItem = playlistTree->GetFirstChild(shared, sharedCookie);
+	wxTreeItemId ownItem = playlistTree->GetFirstChild(own, ownCookie);
 	for (auto &playlist : *playlists) {
 		wxTreeItemId item;
+
+		if (playlist->isShared()) {
+			if (sharedItem.IsOk()) {
+				if (playlist->getTitle() != playlistTree->GetItemText(sharedItem)) {
+					playlistTree->SetItemText(sharedItem, playlist->getTitle());
+				}
+			}
+			else {
+				item = playlistTree->AppendItem(shared, playlist->getTitle());
+				playlist->setTreeItemId(item);
+			}
+			sharedItem = playlistTree->GetNextChild(sharedItem, sharedCookie);
+		}
+		else {
+			if (ownItem.IsOk()) {
+				if (playlist->getTitle() != playlistTree->GetItemText(ownItem)) {
+					playlistTree->SetItemText(ownItem, playlist->getTitle());
+				}
+			}
+			else {
+				item = playlistTree->AppendItem(own, playlist->getTitle());
+				playlist->setTreeItemId(item);
+			}
+			ownItem = playlistTree->GetNextChild(ownItem, ownCookie);
+		}
+		/*wxTreeItemId item;
 		if (playlist->isShared()) {
 			item = playlistTree->AppendItem(shared, playlist->getTitle());
 		}
@@ -869,35 +909,9 @@ void MainFrame::updatePlaylistTree()
 			item = playlistTree->AppendItem(own, playlist->getTitle());
 		}
 
-		playlist->setTreeItemId(item);
+		playlist->setTreeItemId(item);*/
 	}
 
 	playlistTree->Thaw();
-
 	
-	
-}
-
-wxTreeItemId MainFrame::findItem(wxTreeItemId root, const wxString &searchFor)
-{
-	wxTreeItemIdValue cookie;
-	wxTreeItemId item = playlistTree->GetFirstChild(root, cookie);
-
-	while (item.IsOk()) {
-		if (searchFor.CompareTo(playlistTree->GetItemText(item))) {
-			return item;
-		}
-		else {
-			if (playlistTree->ItemHasChildren(item)) {
-				wxTreeItemId search = findItem(item, searchFor);
-				if (search.IsOk()) {
-					return search;
-				}
-			}
-			item = playlistTree->GetNextChild(root, cookie);
-		}
-	}
-	wxTreeItemId dummy;
-	return dummy;
-
 }

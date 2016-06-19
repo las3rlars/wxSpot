@@ -24,6 +24,7 @@ public:
 	Track *getTrack(long item);
 
 	void setHighLight(long item);
+	void showCurrentTrack();
 private:
 	long highLighted;
 
