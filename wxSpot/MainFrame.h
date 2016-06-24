@@ -34,7 +34,9 @@ public:
 	AudioBuffer *getAudioBuffer() { return &audioBuffer;  }
 
 	void sendEvent(const wxEventType type, int cargo = -1);
-
+#ifdef WIN32
+	virtual WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam);
+#endif
 	static wxConfig *config;
 private:
 	enum {

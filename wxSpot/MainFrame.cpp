@@ -125,9 +125,11 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	panel = new wxPanel(this, wxID_ANY);
 	// TODO not sure if this is needed anymore
-	panel->Bind(wxEVT_CHAR_HOOK, [=](wxKeyEvent &event) {
+	/*panel->Bind(wxEVT_CHAR_HOOK, [=](wxKeyEvent &event) {
 		event.Skip();
-	});
+	});*/
+
+
 
 	//auto horzBox = new wxBoxSizer(wxHORIZONTAL);
 	auto vertBox = new wxBoxSizer(wxVERTICAL);
@@ -144,6 +146,15 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	songList = new SongListCtrl(panel2, spotifyManager);
 	songList->SetClientData(nullptr);
+
+	songList->Bind(wxEVT_KEY_DOWN, [=](wxKeyEvent &event) {
+		// 0x48 == 'h'
+
+		if (event.CmdDown() && event.GetKeyCode() == 0x48) {
+			songList->showCurrentTrack();
+		}
+		event.Skip();
+	});
 
 
 	playlistTree = new wxTreeCtrl(panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE | wxTR_HIDE_ROOT | wxTR_EDIT_LABELS);
@@ -484,10 +495,14 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	}
 
 #ifdef WIN32
-	RegisterHotKey(ID_HotKey_PlayPause, 0, VK_MEDIA_PLAY_PAUSE);
+
+	if (!RegisterHotKey(ID_HotKey_PlayPause, 0, VK_MEDIA_PLAY_PAUSE))
+		wxLogError("Could not register play/pause hotkey");
+	if (!RegisterHotKey(ID_HotKey_PlayPause, 0, 0xCF))
+		wxLogError("Could not register play/pause hotkey");
+
 	RegisterHotKey(ID_HotKey_Prev, 0, VK_MEDIA_PREV_TRACK);
 	RegisterHotKey(ID_HotKey_Next, 0, VK_MEDIA_NEXT_TRACK);
-	RegisterHotKey(ID_HotKey_ShowCurrentTrack, 0, 0x48);
 #endif
 	// TODO - only show if we fail to login
 	if (spotifyManager->login() == false) {
@@ -509,6 +524,17 @@ MainFrame::~MainFrame()
 	delete config;
 
 }
+
+#ifdef WIN32
+WXLRESULT MainFrame::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
+{
+	if (nMsg == WM_APPCOMMAND) {
+		playPause();
+		return true;
+	}
+	return wxFrame::MSWWindowProc(nMsg, wParam, lParam);
+}
+#endif
 
 void MainFrame::loadPlugins()
 {
@@ -879,7 +905,7 @@ void MainFrame::updatePlaylistTree()
 
 		if (playlist->isShared()) {
 			if (sharedItem.IsOk()) {
-				if (playlist->getTitle() != playlistTree->GetItemText(sharedItem)) {
+				if (!playlist->getTitle().IsSameAs(playlistTree->GetItemText(sharedItem))) {
 					playlistTree->SetItemText(sharedItem, playlist->getTitle());
 				}
 			}
@@ -891,7 +917,7 @@ void MainFrame::updatePlaylistTree()
 		}
 		else {
 			if (ownItem.IsOk()) {
-				if (playlist->getTitle() != playlistTree->GetItemText(ownItem)) {
+				if (!playlist->getTitle().IsSameAs(playlistTree->GetItemText(ownItem))) {
 					playlistTree->SetItemText(ownItem, playlist->getTitle());
 				}
 			}
