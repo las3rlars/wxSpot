@@ -19,6 +19,7 @@
 #include "DnDTrackDataObject.h"
 #include "DnDTrackDropTarget.h"
 #include "ProgressIndicator.h"
+#include "Spectrum.h"
 
 #include "SoundManager.h"
 #include "SpotifyManager.h"
@@ -54,6 +55,7 @@ EVT_COMMAND(wxID_ANY, PLUGIN_LOADED_EVENT, MainFrame::OnPluginLoadedEvent)
 EVT_MENU(wxID_EXIT, MainFrame::OnExit)
 EVT_MENU(ID_Logout, MainFrame::OnLogout)
 EVT_MENU(ID_Settings, MainFrame::OnSettings)
+EVT_MENU(ID_ShowSpectrum, MainFrame::OnShowSpectrum)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_TIMER(wxID_ANY, MainFrame::OnTimerEvent)
 
@@ -111,6 +113,8 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 	wxMenu *optionsFile = new wxMenu();
 	optionsFile->Append(ID_Settings, "&Settings...\tCtrl-S");
+	auto showSpectrum = optionsFile->AppendCheckItem(ID_ShowSpectrum, "Show Spectrum");
+	showSpectrum->Check(true);
 
 	wxMenu *menuHelp = new wxMenu();
 	menuHelp->Append(wxID_ABOUT);
@@ -151,6 +155,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		// 0x48 == 'h'
 
 		if (event.CmdDown() && event.GetKeyCode() == 0x48) {
+			songList->setPlaylist(activePlaylist);
 			songList->showCurrentTrack();
 		}
 		event.Skip();
@@ -450,6 +455,9 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 		spotifyManager->seek(progressIndicator->GetValue() * spotifyManager->getSongLength());
 	});
 
+	spectrum = new Spectrum(panel);
+
+
 
 	textCurrentProgressTime = new wxStaticText(panel, wxID_ANY, "0:00");
 	textTotalTime = new wxStaticText(panel, wxID_ANY, "0:00");
@@ -461,6 +469,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	bottomHorzBox->Add(progressIndicator, 1, wxALIGN_CENTER_VERTICAL | wxALL | wxEXPAND, 2);
 	bottomHorzBox->Add(textTotalTime, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
 	bottomHorzBox->Add(checkBoxShuffle, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
+	bottomHorzBox->Add(spectrum, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, 2);
 	bottomHorzBox->Layout();
 
 
@@ -472,6 +481,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 
 	soundManager = new SoundManager(this);
+	soundManager->setSpectrum(spectrum);
 
 	spotifyManager->setEventHandler(GetEventHandler());
 
@@ -588,9 +598,27 @@ void MainFrame::OnSettings(wxCommandEvent &event)
 	}
 }
 
+void MainFrame::OnShowSpectrum(wxCommandEvent &event)
+{
+	/*wxMenuItem *test = (wxMenuItem*)event.GetClientData();
+	if (test->IsCheck()) {
+		wxLogDebug("checked");
+	}
+	else {
+		wxLogDebug("not checked");
+	}*/
+	if (soundManager->getSpectrum() != nullptr) {
+		soundManager->setSpectrum(nullptr);
+		spectrum->clear();
+	}
+	else {
+		soundManager->setSpectrum(spectrum);
+	}
+}
+
 void MainFrame::OnAbout(wxCommandEvent &event)
 {
-	wxMessageBox("wxSpot 1.0.2 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
+	wxMessageBox("wxSpot 1.0.3 by Viktor Müntzing", "About", wxOK | wxICON_INFORMATION);
 }
 
 void MainFrame::OnSpotifyWakeUpEvent(wxCommandEvent &event)
@@ -895,7 +923,7 @@ void MainFrame::updatePlaylistTree()
 	if (!own.IsOk() || !shared.IsOk())
 		return;
 
-	playlistTree->Freeze();
+	//playlistTree->Freeze();
 
 	wxTreeItemIdValue sharedCookie, ownCookie;
 	wxTreeItemId sharedItem = playlistTree->GetFirstChild(shared, sharedCookie);
@@ -938,6 +966,6 @@ void MainFrame::updatePlaylistTree()
 		playlist->setTreeItemId(item);*/
 	}
 
-	playlistTree->Thaw();
+	//playlistTree->Thaw();
 	
 }

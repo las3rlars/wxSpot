@@ -8,6 +8,7 @@
 
 class Plugin;
 class MainFrame;
+class Spectrum;
 
 class Device
 {
@@ -35,7 +36,10 @@ public:
 	void bufferDone();
 	
 	//void setMilkDropVisualizer(MilkDropVisualizer *visualizer);
+	void setSpectrum(Spectrum *spectrum);
 	void setPCMPlugin(Plugin *plugin);
+
+	Spectrum *getSpectrum() { return spectrum; }
 	//std::vector<Device *> *getDevices();
 	std::vector<std::shared_ptr<Device>> *getDevices();
 
@@ -49,5 +53,6 @@ private:
 
 	//MilkDropVisualizer *m_milkDropVisualizer;
 	Plugin *plugin;
+	Spectrum *spectrum;
 };
 

@@ -60,6 +60,12 @@
     <ClInclude Include="Main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Spectrum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="kissfft\kiss_fftr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SpotifyManager.cpp">
@@ -99,6 +105,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Spectrum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="kissfft\kiss_fftr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="kissfft\kiss_fft.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

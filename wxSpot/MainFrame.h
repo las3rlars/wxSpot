@@ -21,6 +21,7 @@ class wxTreeCtrl;
 class Playlist;
 class LoginDialog;
 class ProgressIndicator;
+class Spectrum;
 class Track;
 
 class MainFrame : public wxFrame
@@ -49,6 +50,7 @@ private:
 	enum {
 		ID_Logout = 1,
 		ID_Settings,
+		ID_ShowSpectrum,
 		ID_MilkDrop,
 		ID_Menu_Add_To_Playlist,
 		ID_Menu_Open_Artist,
@@ -73,6 +75,7 @@ private:
 	void OnExit(wxCommandEvent &event);
 	void OnLogout(wxCommandEvent &event);
 	void OnSettings(wxCommandEvent &event);
+	void OnShowSpectrum(wxCommandEvent &event);
 	void OnMilkDrop(wxCommandEvent &event);
 	void OnAbout(wxCommandEvent &event);
 
@@ -126,6 +129,7 @@ private:
 	wxButton *buttonNext;
 	wxButton *buttonPrev;
 	ProgressIndicator *progressIndicator;
+	Spectrum *spectrum;
 
 	wxStaticText *textCurrentProgressTime;
 	wxStaticText *textTotalTime;

@@ -3,6 +3,7 @@
 #include "AudioBuffer.h"
 #include "Plugin.h"
 #include "MainFrame.h"
+#include "Spectrum.h"
 
 #define SAMPLE_RATE (44100)
 
@@ -29,7 +30,7 @@ static int paCallback(const void *input, void *output, unsigned long frameCount,
 	
 }
 
-SoundManager::SoundManager(MainFrame *mainFrame) : plugin(nullptr)
+SoundManager::SoundManager(MainFrame *mainFrame) : plugin(nullptr), spectrum(nullptr)
 {
 	m_pMainFrame = mainFrame;
 	PaError error = Pa_Initialize();
@@ -114,10 +115,15 @@ unsigned int SoundManager::getSoundData(void *frames, int num_frames)
 	if (len == -1) {
 		bufferDone();
 	}
+
+
 	
 	//return buffer->readData((int16_t *)frames, num_frames);
 	if (plugin != nullptr)
 		plugin->updatePCM((int16_t *)frames);
+
+	if (spectrum != nullptr)
+		spectrum->calc((int16_t *)frames);
 
 	return len;
 
@@ -128,10 +134,16 @@ void SoundManager::bufferDone()
 	m_pMainFrame->sendEvent(SPOTIFY_PLAY_NEXT_EVENT);
 }
 
+void SoundManager::setSpectrum(Spectrum *spectrum)
+{
+	this->spectrum = spectrum;
+}
+
 void SoundManager::setPCMPlugin(Plugin *plugin)
 {
 	this->plugin = plugin;
 }
+
 
 std::vector<std::shared_ptr<Device>> *SoundManager::getDevices()
 {
